@@ -1,16 +1,17 @@
 // lib/stripe.ts
 import Stripe from "stripe";
 
-/**
- * Env yoksa bile build'in düşmemesi için güvenli kurulum.
- * Not: apiVersion alanını VERMEYİZ → Stripe types en son sürümü bekliyor,
- * sabit string literal yüzünden TS hatası çıkıyor. O yüzden default bırakıyoruz.
- */
 const secret = process.env.STRIPE_SECRET_KEY ?? "";
 export const PRICE_ID = process.env.STRIPE_PRICE_ID ?? "";
 
-/** Env yoksa null; varsa Stripe instance.  */
-export const stripe: Stripe | null = secret ? new Stripe(secret) : null;
+/** Stripe örneği lazım olduğunda çağır. Tipi her zaman Stripe döner. */
+export function requireStripe(): Stripe {
+    if (!secret) {
+        throw new Error("STRIPE_SECRET_KEY is missing");
+    }
+    // En sade ve hatasız: config hiç vermiyoruz → hesap varsayılan versiyonu kullanılır.
+    return new Stripe(secret);
 
-// İsteyen hem default hem named import edebilsin:
-export default stripe;
+    // Alternatif (yine hatasız): 
+    // return new Stripe(secret, { apiVersion: undefined });
+}
