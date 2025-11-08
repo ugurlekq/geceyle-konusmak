@@ -1,4 +1,16 @@
-﻿import Stripe from 'stripe';
+// lib/stripe.ts
+import Stripe from "stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-// apiVersion vermeyince, hesabının (Dashboard) API versiyonu kullanılır.
+/**
+ * Env yoksa bile build'in düşmemesi için güvenli kurulum.
+ * Not: apiVersion alanını VERMEYİZ → Stripe types en son sürümü bekliyor,
+ * sabit string literal yüzünden TS hatası çıkıyor. O yüzden default bırakıyoruz.
+ */
+const secret = process.env.STRIPE_SECRET_KEY ?? "";
+export const PRICE_ID = process.env.STRIPE_PRICE_ID ?? "";
+
+/** Env yoksa null; varsa Stripe instance.  */
+export const stripe: Stripe | null = secret ? new Stripe(secret) : null;
+
+// İsteyen hem default hem named import edebilsin:
+export default stripe;
