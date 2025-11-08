@@ -1,19 +1,18 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import { NextRequest, NextResponse } from "next/server";
+import { requireStripe } from "@/lib/stripe";
 
-export async function GET(req: NextRequest){
-    const email = req.cookies.get('sa_email')?.value;
-    if(!email) return NextResponse.json({ email: null, isSubscribed: false });
+export async function POST(req: NextRequest) {
+    const { email } = await req.json();
+    if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
+
+    const stripe = requireStripe();
 
     const customers = await stripe.customers.list({ email, limit: 1 });
     const customer = customers.data[0];
-    if(!customer) return NextResponse.json({ email, isSubscribed: false });
 
-    const subs = await stripe.subscriptions.list({
-        customer: customer.id,
-        status: 'active',
-        limit: 1,
-    });
+    if (!customer) {
+        return NextResponse.json({ error: "not found" }, { status: 404 });
+    }
 
-    return NextResponse.json({ email, isSubscribed: subs.data.length > 0 });
+    return NextResponse.json({ id: customer.id });
 }
