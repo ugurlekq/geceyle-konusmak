@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dergi hissi */
+:root {
+  --bg-grain: radial-gradient(circle at 20% 30%, #1a1a1a 0%, #000 60%);
+}
+
+html, body { height: 100%; }
+
+body {
+  @apply bg-black text-white font-serif tracking-wide;
+  background-image: var(--bg-grain);
+  overflow-x: hidden;
+}
+
+/* Headings */
+h1, h2, h3 { @apply text-amber-400 font-semibold; }
+
+/* Paragraphs */
+p { @apply text-gray-200 leading-relaxed; }
+
+/* Links */
+a { @apply underline-offset-4 decoration-amber-500/40; }
+a:hover { @apply decoration-amber-400; }
+
+/* Theme variants */
+.theme-amber body { background-image: var(--bg-grain); }
+.theme-dim   body { background-image: radial-gradient(circle at 20% 30%, #101010 0%, #000 60%); }
+.theme-mono  body { filter: grayscale(0.9) contrast(1.05); }
+
+/* ——— HEAT / FLICKER ANIMS ——— */
+@keyframes heat-wave {
+  0%   { transform: translateY(0) scale(1);   filter: blur(0.8px); opacity: .55; }
+  50%  { transform: translateY(-2px) scale(1.02); filter: blur(1.2px); opacity: .65; }
+  100% { transform: translateY(0) scale(1);   filter: blur(0.8px); opacity: .55; }
+}
+
+@keyframes candle-flicker {
+  0%,100% { opacity: 1;   text-shadow: 0 0 0  rgba(255,199,88,.0); }
+  10%     { opacity: .96; text-shadow: 0 0 6px rgba(255,199,88,.12); }
+  22%     { opacity: .985;text-shadow: 0 0 10px rgba(255,199,88,.18); }
+  35%     { opacity: .95; text-shadow: 0 0 4px rgba(255,199,88,.10); }
+  57%     { opacity: .99; text-shadow: 0 0 12px rgba(255,199,88,.22); }
+  78%     { opacity: .97; text-shadow: 0 0 7px rgba(255,199,88,.14); }
+}
+
+/* ——— GLOBAL OVERLAYS ——— */
+
+/* ÜSTTEN hafif amber yıkama: sayfanın tamamını kaplar */
+.warm-wash{
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+          radial-gradient(60vw 42vh at 50% 12%,
+          rgba(255,200,120,.10),
+          transparent 65%);
+  mix-blend-mode: screen;
+}
+
+/* ALTTAN sıcaklık – bant hissi yok; tüm sayfaya yayılır */
+.heater-glow{
+  pointer-events: none;
+  position: fixed;
+  left: 0; right: 0;
+  bottom: -28vh;             /* daha aşağıdan */
+  height: 130vh;             /* neredeyse tüm sayfa */
+  background:
+          radial-gradient(1400px 90vh at 50% 98%,
+          rgba(255,184,77,.52),
+          rgba(255,184,77,.28) 35%,
+          rgba(255,184,77,.12) 62%,
+          transparent 80%);
+  animation: heat-wave 6s ease-in-out infinite;
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
+/* Mum titremesi (başlık/intro gibi metinlerde) */
+.candle-flicker{
+  animation: candle-flicker 5.5s ease-in-out infinite;
+  will-change: opacity, text-shadow;
+}
