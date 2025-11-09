@@ -6,13 +6,9 @@ export async function POST(req: NextRequest) {
     if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
 
     const stripe = requireStripe();
-
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    const customer = customers.data[0];
-
-    if (!customer) {
-        return NextResponse.json({ error: "not found" }, { status: 404 });
-    }
+    const { data } = await stripe.customers.list({ email, limit: 1 });
+    const customer = data[0];
+    if (!customer) return NextResponse.json({ error: "not found" }, { status: 404 });
 
     return NextResponse.json({ id: customer.id });
 }
