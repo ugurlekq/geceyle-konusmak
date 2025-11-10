@@ -3,18 +3,23 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import Hero from '../components/Hero';
-import BackgroundYouTube from '../components/BackgroundYouTube';
-import { authors } from '../data/authors';
-import SubscribeModal from '../components/SubscribeModal';
+
 import Header from '../components/Header';
+import Hero from '../components/Hero';
+import MembershipPitch from '../components/MembershipPitch';
+import AboutMag from '../components/AboutMag';
+import Embers from '@/components/Embers';
+import BackgroundYouTube from '../components/BackgroundYouTube';
+import SubscribeModal from '../components/SubscribeModal';
+
+import { authors } from '../data/authors';
 
 function AuthorsGrid() {
     return (
         <section className="relative z-10 mx-auto max-w-4xl px-6 mt-16">
             <h2 className="text-xl text-white/80 mb-4">Yazarlar</h2>
             <div className="grid sm:grid-cols-2 gap-4">
-                {authors.map(a => (
+                {authors.map((a) => (
                     <Link
                         key={a.id}
                         href={`/authors/${a.id}`}
@@ -33,28 +38,26 @@ function AuthorsGrid() {
 }
 
 export default function Home() {
-    const [playing, setPlaying] = useState(false);
-    const [muted, setMuted] = useState(true);       // autoplay için sessiz başla
-    const [revealVideo, setRevealVideo] = useState(false);
-    const [showSubscribe, setShowSubscribe] = useState(false);
+    // Video: autoplay + muted
+    const [playing] = useState(true);
+    const [muted, setMuted] = useState(true);
 
-    // Görüntüyü 3.5 sn geciktir (müzik hemen, görüntü sonra)
+    // Görsel gecikmeli açılış
+    const [revealVideo, setRevealVideo] = useState(false);
     useEffect(() => {
-        if (!playing) {
-            setRevealVideo(false);
-            return;
-        }
         const t = setTimeout(() => setRevealVideo(true), 3500);
         return () => clearTimeout(t);
-    }, [playing]);
+    }, []);
+
+    // Üyelik modal
+    const [showSubscribe, setShowSubscribe] = useState(false);
 
     return (
         <>
-            {/* SABİT HEADER */}
             <Header />
 
-            {/* Header yüksekliğini telafi etmek için pt-14 */}
-            <main className="relative min-h-screen overflow-hidden pt-14">
+            <main className="relative min-h-screen overflow-hidden pt-14 pb-40">
+                {/* Arka plan video */}
                 <BackgroundYouTube
                     videoId="7DkIKFGJh14"
                     start={0}
@@ -63,9 +66,15 @@ export default function Home() {
                     blur="blur-[1px]"
                     playing={playing}
                     muted={muted}
+                    // ✅ üst banner yüksekliği (isteğine göre ayarla)
+                    heightClass="h-[52vh] md:h-[46vh]"
                 />
 
-                {/* Görseli geciktiren karartma katmanı (videonun ÜSTÜ, içeriğin ALTINDA) */}
+
+                {/* Kıvılcım/mum titreşimleri */}
+                <Embers />
+
+                {/* Görüntüyü geciktiren karartma */}
                 <div
                     className={`pointer-events-none fixed inset-0 -z-5 bg-black transition-opacity duration-700 ${
                         revealVideo ? 'opacity-0' : 'opacity-80'
@@ -73,53 +82,81 @@ export default function Home() {
                     aria-hidden
                 />
 
-                {/* Play düğmesi (sadece başlamadıysa) */}
-                {!playing && (
-                    <button
-                        onClick={() => setPlaying(true)}
-                        className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-white/10 border border-amber-400 text-amber-300 px-6 py-3 rounded-xl hover:bg-amber-400 hover:text-black transition z-20"
-                    >
-                        ▶ Videoyu Başlat
-                    </button>
-                )}
-
-                {/* Ses aç/kapa */}
+                {/* Ses aç/kapa — sabit alt-sağ */}
                 <button
-                    onClick={() => { if (!playing) setPlaying(true); setMuted(m => !m); }}
-                    className="absolute bottom-10 right-10 bg-white/10 border border-amber-400 text-amber-300 px-4 py-2 rounded-xl hover:bg-amber-400 hover:text-black transition z-20"
+                    onClick={() => setMuted((m) => !m)}
+                    className="
+            fixed z-40
+            right-[calc(env(safe-area-inset-right,0px)+16px)]
+            bottom-[calc(env(safe-area-inset-bottom,0px)+16px)]
+            px-4 py-2 rounded-xl
+            border border-amber-400
+            bg-black/30 backdrop-blur-sm
+            text-amber-300
+            hover:bg-amber-400 hover:text-black
+            transition shadow-lg
+          "
                     aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
                     title={muted ? 'Sesi aç' : 'Sesi kapat'}
                 >
                     {muted ? '🔇 Ses Kapalı' : '🔊 Ses Açık'}
                 </button>
 
-                {/* alttan sıcaklık */}
+                {/* Alttan sıcaklık */}
                 <div className="heater-glow" aria-hidden />
 
-                {/* içerik */}
+                {/* İçerik */}
                 <div className="relative z-10">
                     <Hero />
 
-                    <div className="flex flex-col items-center text-center px-6 pb-20">
+                    {/* ——— MOTTOLAR ——— */}
+                    <section className="text-center px-6 mt-10">
+                        {/* Üst lede (kısa manifesto) */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4, duration: 1.0 }}
+                            transition={{ duration: 1.0 }}
                             viewport={{ once: true }}
                         >
-                            <p className="candle-flicker max-w-2xl text-gray-300 mb-8">
-                                “Bazı geceler vardır, düşünceler insanı değil, insan düşünceleri taşır.”
+                            <p className="candle-flicker max-w-3xl mx-auto text-lg md:text-xl text-gray-300/95 leading-relaxed">
+                                Bir sohbetin felsefeye, felsefenin sessizliğe dönüştüğü an.
+                                <br className="hidden md:block" />
+                                Gece, kelimelerin hızını alır; düşünce kendi ritmine döner.
+                                <br className="hidden md:block" />
+                                Okur ve metin, susmayı da konuşmanın bir parçası sayar.
                             </p>
+                            {/* İnce amber ayırıcı */}
+                            <div className="mx-auto mt-8 h-px w-24 bg-amber-400/40 shadow-[0_0_18px_rgba(251,191,36,.35)]" />
                         </motion.div>
 
-                        <button
-                            onClick={() => setShowSubscribe(true)}
-                            className="border border-amber-400 px-6 py-3 rounded-xl text-amber-400 hover:bg-amber-400 hover:text-black transition"
+                        {/* Alttaki ana alıntı */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.9 }}
                         >
-                            İlk Sayıya Gir →
-                        </button>
-                    </div>
+                            <blockquote className="max-w-3xl mx-auto mt-8">
+                                <p className="candle-flicker text-amber-300 text-xl md:text-2xl italic leading-relaxed">
+                                    “Bazı geceler vardır; düşünceler insanı değil, insan düşünceleri taşır.”
+                                </p>
+                                <p className="mt-3 text-white/60 text-base md:text-lg">
+                                    Ve o gecelerde, tek bir cümle bütün günün gürültüsünden daha ağır gelir.
+                                </p>
+                            </blockquote>
+                        </motion.div>
 
+
+                        {/* CTA */}
+                        <div className="mt-10 flex justify-center">
+                           
+                        </div>
+                    </section>
+
+                    {/* Neden üyelik? & Biz kimiz? */}
+                    <MembershipPitch />
+                    <AboutMag />
+
+                    {/* Yazarlar */}
                     <AuthorsGrid />
                 </div>
 

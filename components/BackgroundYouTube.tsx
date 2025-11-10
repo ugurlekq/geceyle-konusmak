@@ -2,15 +2,14 @@
 import { useEffect, useRef } from 'react';
 
 type Props = {
-    videoId: string;          // ör: "7DkIKFGJh14"
-    start?: number;           // saniye
-    end?: number;             // saniye — buna geldiğinde başa sar
-    opacity?: number;         // 0..1
-    blur?: string;            // "blur-sm", "blur-[1px]"...
-    playing?: boolean;        // dışarıdan play/pause kontrolü
-    className?: string;       // ekstra sınıflar
-    muted?: boolean;          // autoplay için varsayılan true
-    onFirstPlay?: () => void; // video ilk kez PLAYING olduğunda çağrılır
+    videoId: string;
+    start?: number;
+    end?: number;
+    opacity?: number;
+    blur?: string;
+    playing?: boolean;
+    muted?: boolean;
+    heightClass?: string; // banner yüksekliği
 };
 
 declare global {
@@ -23,109 +22,81 @@ declare global {
 export default function BackgroundYouTube({
                                               videoId,
                                               start = 0,
-                                              end = 240,                 // ör: 4:00
+                                              end = 240,
                                               opacity = 0.35,
-                                              blur = 'blur-sm',
-                                              playing = false,
-                                              className = '',
+                                              blur = '',
+                                              playing = true,
                                               muted = true,
-                                              onFirstPlay,
+                                              heightClass = 'h-[52vh] md:h-[46vh]',
                                           }: Props) {
-    const wrapperRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
-    const tickerRef = useRef<number | null>(null);
-    const firedRef = useRef(false); // ✅ onFirstPlay sadece 1 kez
 
-    // API'yi yükle + player'ı oluştur
+    // 1) IFrame API yükle
     useEffect(() => {
-        const ensureApi = () =>
-            new Promise<void>((resolve) => {
-                if (window.YT && window.YT.Player) return resolve();
-                const tag = document.createElement('script');
-                tag.src = 'https://www.youtube.com/iframe_api';
-                document.head.appendChild(tag);
-                window.onYouTubeIframeAPIReady = () => resolve();
-            });
+        if (window.YT?.Player) return; // zaten yüklü
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+    }, []);
 
-        const create = async () => {
-            await ensureApi();
-            if (!wrapperRef.current) return;
+    // 2) Player oluştur
+    useEffect(() => {
+        if (!containerRef.current) return;
 
-            // varsa eski içeriği temizle
-            wrapperRef.current.innerHTML = '';
-
-            // player'ı bağlayacağımız iç div
-            const host = document.createElement('div');
-            host.style.width = '100%';
-            host.style.height = '100%';
-            wrapperRef.current.appendChild(host);
-
-            playerRef.current = new window.YT.Player(host, {
+        function create() {
+            if (playerRef.current) return;
+            playerRef.current = new window.YT.Player(containerRef.current, {
+                host: 'https://www.youtube-nocookie.com', // çerez ve hesap çatışmalarını azalt
+                height: '100%',
+                width: '100%',
                 videoId,
                 playerVars: {
-                    autoplay: 1,         // 🔁 sessiz autoplay
-                    controls: 0,         // arka plan — buton yok
-                    disablekb: 1,
-                    fs: 0,
+                    autoplay: 1,           // otomatik başlat
+                    mute: muted ? 1 : 0,   // autoplay için sessiz
+                    controls: 0,
                     rel: 0,
                     modestbranding: 1,
                     playsinline: 1,
+                    disablekb: 1,
+                    fs: 0,
                     start,
+                    end,
+                    loop: 1,
+                    playlist: videoId,     // loop için gerekli
+                    origin: window.location.origin,
                 },
                 events: {
                     onReady: (e: any) => {
                         try {
-                            // autoplay politikası için sessiz başlat
-                            if (muted) e.target.mute(); else e.target.unMute();
-                            e.target.seekTo(start, true);
-                            e.target.playVideo(); // sessizce başlar
+                            if (muted) e.target.mute();
+                            e.target.setVolume(50);
+                            if (playing) e.target.playVideo();
                         } catch {}
-
-                        // segment döngüsü (start..end)
-                        if (end != null) {
-                            tickerRef.current = window.setInterval(() => {
-                                try {
-                                    const t = e.target.getCurrentTime?.() ?? 0;
-                                    if (t >= end - 0.2) e.target.seekTo(start, true);
-                                } catch {}
-                            }, 250);
-                        }
                     },
-                    onStateChange: (ev: any) => {
-                        // ilk kez PLAYING'e geçtiğinde haber ver
-                        if (ev.data === window.YT.PlayerState.PLAYING && !firedRef.current) {
-                            firedRef.current = true;
-                            onFirstPlay?.();
-                        }
-                        // güvenlik: ENDED gelirse başa sar ve devam et
-                        if (ev.data === window.YT.PlayerState.ENDED) {
-                            try {
-                                ev.target.seekTo(start, true);
-                                ev.target.playVideo();
-                            } catch {}
-                        }
+                    onStateChange: (e: any) => {
+                        // Durum gerektiğinde debug etmek için burayı açabilirsin
+                        // console.log('YT state:', e.data);
                     },
                 },
             });
-        };
+        }
 
-        create();
+        if (window.YT?.Player) create();
+        else {
+            window.onYouTubeIframeAPIReady = () => create();
+        }
 
         return () => {
-            if (tickerRef.current) {
-                clearInterval(tickerRef.current);
-                tickerRef.current = null;
-            }
             try {
                 playerRef.current?.destroy?.();
             } catch {}
             playerRef.current = null;
-            if (wrapperRef.current) wrapperRef.current.innerHTML = '';
-            firedRef.current = false;
         };
-    }, [videoId, start, end, muted]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [videoId]);
 
-    // dışarıdan playing değişince kontrol et
+    // 3) playing değişince uygula
     useEffect(() => {
         const p = playerRef.current;
         if (!p) return;
@@ -135,25 +106,36 @@ export default function BackgroundYouTube({
         } catch {}
     }, [playing]);
 
-    // dışarıdan muted değişince uygula
+    // 4) muted değişince uygula (unmute + play tetikle)
     useEffect(() => {
         const p = playerRef.current;
         if (!p) return;
         try {
             if (muted) p.mute();
-            else p.unMute();
+            else {
+                p.unMute();
+                p.setVolume(60);
+                p.playVideo(); // bazı tarayıcılarda unmute için ekstra oynat tetik gerekir
+            }
         } catch {}
     }, [muted]);
 
     return (
         <div
-            className={`pointer-events-none fixed inset-0 -z-10 ${blur} ${className}`}
-            style={{ opacity }}
+            className={`fixed left-0 right-0 top-0 ${heightClass} -z-10 pointer-events-none overflow-hidden`}
+            style={{
+                opacity,
+                WebkitMaskImage:
+                    'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.85) 60%, rgba(0,0,0,0) 100%)',
+                maskImage:
+                    'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,.85) 60%, rgba(0,0,0,0) 100%)',
+            }}
             aria-hidden
         >
-            <div ref={wrapperRef} className="w-full h-full object-cover" />
-            {/* hafif karartma (istersen kaldır) */}
-            <div className="absolute inset-0 bg-black/30" />
+            <div className={`absolute inset-0 ${blur}`}>
+                {/* iframe bu div'in içine mount edilir */}
+                <div id="yt-bg" ref={containerRef} className="w-full h-full"></div>
+            </div>
         </div>
     );
 }

@@ -4,7 +4,7 @@ slug: "sukunetli-alev"
 authorId: "leon-varis"
 date: "2025-10-23"
 excerpt: "Sükûnet, pasif bir durgunluk değil; yaşamın kendi hızını nihayet duymasıdır. Azalan ışıkta, insanın iç sesi görünür olur."
-embedUrl: "https://www.youtube.com/watch?v=_QqabGYTSpQ&list=RD_QqabGYTSpQ&start_radio=1"
+embedUrl: "https://www.youtube.com/watch?v=ODP7b6CYwxo&list=RDODP7b6CYwxo&start_radio=1&t=23s"
 ---
 
 Gece artık hiçbir şeyi açıklamak zorunda değildir. Konuşmalar çoktan yeraltına çekilmiş, düşünceler bile kendi gölgelerini sessizce taşımaya başlamıştır. Bir mum yanar hâlâ — ne aydınlatmak için, ne de söndürülmek için; sadece varlığını hatırlatmak için. Alevin en sessiz hâli, **sükûnetli alev**, ışık olmaktan önce **olma** hâlidir.
