@@ -179,8 +179,17 @@ export default function IssuePage({ issueNo, serverArticles }: Props) {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-    return { paths: [{ params: { id: "01" } }], fallback: "blocking" };
+    const issues = (await import("@/content/issues/index.json")).default as any[];
+    const paths = issues.map(it => ({
+        params: { id: String(it.number).padStart(2, "0") },
+    }));
+
+    // İstersen 1. sayıyı da buradan yönetebilirsin, ama ayrı /issue01 sayfan olduğu için şart değil.
+    // paths.push({ params: { id: "01" } });
+
+    return { paths, fallback: "blocking" };
 };
+
 
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     const id = String(params?.id ?? "01");
