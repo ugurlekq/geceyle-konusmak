@@ -115,6 +115,22 @@ async function removeIssueFromDisk(number: number) {
     }
 }
 
+/** Diskten güncel sayı listesini oku, yoksa local store’a düş. */
+async function loadIssuesFromDiskOrLocal(setIssuesFn: (x: Issue[]) => void) {
+    try {
+        const r = await fetch('/api/content/issues', { cache: 'no-store' });
+        const d = await r.json().catch(() => ({} as any));
+        const items: Issue[] = Array.isArray(d.items) ? d.items : [];
+        if (items.length > 0) {
+            setIssuesFn(items);
+            return;
+        }
+    } catch (err) {
+        console.warn('Diskten sayı okunamadı, local store kullanılacak:', err);
+    }
+    setIssuesFn(getIssues());
+}
+
 /* --------------------- Sayfa bileşeni --------------------- */
 
 export default function AdminPage() {
@@ -129,7 +145,7 @@ export default function AdminPage() {
     const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
     const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 
-    // oturum
+    // oturum + listeler
     useEffect(() => {
         (async () => {
             try {
@@ -143,9 +159,13 @@ export default function AdminPage() {
             }
         })();
 
-        // UI listeleri (local store – geri dönüş için)
-        setIssues(getIssues());
-        setArts(getArticles());
+        // 🔹 SAYILARI ÖNCE DİSKTEN, OLMAZSA LOCAL STORE’DAN YÜKLE
+        (async () => {
+            await loadIssuesFromDiskOrLocal(setIssues);
+
+            // Yazılar şimdilik sadece local store’dan (dinamik eklenenler)
+            setArts(getArticles());
+        })();
     }, []);
 
     async function logout() {
@@ -217,16 +237,18 @@ export default function AdminPage() {
                         try {
                             setBusy(true);
 
-                            // 1) local store
+                            // 1) local store (eski davranışı koruyalım)
                             saveIssue(i);
-                            setIssues(getIssues());
 
-                            // 2) disk
+                            // 2) diske yaz
                             try {
                                 await persistIssueToDisk(i);
                             } catch (err) {
                                 console.warn('Sayı diske yazılamadı:', err);
                             }
+
+                            // 3) 🔹 UI’ı mutlaka diskteki gerçek listeyle güncelle
+                            await loadIssuesFromDiskOrLocal(setIssues);
 
                             setEditingIssue(null);
                         } finally {
@@ -313,11 +335,20 @@ export default function AdminPage() {
                                                     onClick={async () => {
                                                         try {
                                                             setBusy(true);
-                                                            deleteIssue(i.id); // UI
-                                                            setIssues(getIssues());
+
+                                                            // local store’dan da sil
+                                                            deleteIssue(i.id);
+
+                                                            // diskte sil
                                                             await removeIssueFromDisk(
                                                                 Number(i.number)
-                                                            ); // Disk
+                                                            );
+
+                                                            // 🔹 tekrar diskteki güncel listeyi oku
+                                                            await loadIssuesFromDiskOrLocal(
+                                                                setIssues
+                                                            );
+
                                                             if (
                                                                 editingIssue &&
                                                                 editingIssue.id === i.id
@@ -346,10 +377,11 @@ export default function AdminPage() {
                         ) : (
                             <ul className="space-y-2">
                                 {arts
+                                    .slice()
                                     .sort(
                                         (a, b) =>
-                                            new Date(b.date).getTime() -
-                                            new Date(a.date).getTime()
+                                            new Date(b.date as any).getTime() -
+                                            new Date(a.date as any).getTime()
                                     )
                                     .map((a) => (
                                         <li
@@ -469,7 +501,7 @@ function IssueForm({
                     type="number"
                     value={number}
                     onChange={(e) =>
-                        setNumber(parseInt(e.target.value || '0'))
+                        setNumber(parseInt(e.target.value || '0', 10))
                     }
                     placeholder="Sayı No"
                 />
@@ -590,7 +622,7 @@ function ArticleForm({
                     className="md:col-span-1 input"
                     value={issueNumber}
                     onChange={(e) =>
-                        setIssueNumber(parseInt(e.target.value))
+                        setIssueNumber(parseInt(e.target.value, 10))
                     }
                 >
                     {issues
