@@ -16,11 +16,11 @@ export default function ArticleLayout({ title, children }: { title: string; chil
                 {children}
             </motion.div>
 
-            <div className="mt-12 text-center">
-                <Link href="/issue01" className="text-amber-400 hover:underline">
-                    ← Sayıya Dön
-                </Link>
-            </div>
+            {/*<div className="mt-12 text-center">*/}
+            {/*    <Link href="/issue01" className="text-amber-400 hover:underline">*/}
+            {/*        ← Sayıya Dön*/}
+            {/*    </Link>*/}
+            {/*</div>*/}
         </article>
     );
 }

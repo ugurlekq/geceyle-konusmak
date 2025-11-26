@@ -1,17 +1,23 @@
 ﻿// components/BackLink.tsx
-import Link from "next/link";
+import Link from 'next/link';
 
-export default function BackLink({ href = "/", label = "← Geri Dön" }:{
-    href?: string; label?: string;
-}) {
+type Props = {
+    href: string;
+    label?: string;
+    className?: string;
+};
+
+export default function BackLink({ href, label = '← Geri', className = '' }: Props) {
     return (
-        <div className="mt-10">
-            <Link
-                href={href}
-                className="text-amber-400 hover:text-amber-300 underline-offset-4 hover:underline"
-            >
-                {label}
-            </Link>
-        </div>
+        <Link
+            href={href}
+            className={
+                'inline-flex items-center text-amber-300 hover:text-amber-200 hover:underline ' +
+                'transition ' +
+                className
+            }
+        >
+            {label}
+        </Link>
     );
 }

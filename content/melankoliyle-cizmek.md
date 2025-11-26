@@ -3,6 +3,7 @@ title: "Melankoliyle Çizmek"
 excerpt: "Melankoli, gölgenin değil; gölgenin çizgisidir. Duygunun biçim arayışında saklı bir ışık vardır."
 date: "2025-10-23"
 authorId: "leon-varis"
+embedUrl: "https://www.youtube.com/watch?v=ffCvy7QT9C8&list=RDffCvy7QT9C8&start_radio=1&t=18263s"
 ---
 
 > “Melankoli, karanlığa düşmek değil; karanlığın şeklini görmektir.”

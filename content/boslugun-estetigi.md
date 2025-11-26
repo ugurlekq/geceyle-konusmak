@@ -3,6 +3,7 @@ title: "Boşluğun Estetiği"
 excerpt: "Boşluk yokluk değildir; aşırı doygunluğa verilen bilinçli bir cevap ve anlamın yeniden doğacağı sessiz alan."
 date: "2025-10-23"
 authorId: "leon-varis"
+embedUrl: "https://www.youtube.com/watch?v=h77v4F3wCSo"
 ---
 
 > “Bir şeyin eksikliği değil, her şeyin fazlalığı yorar insanı.”

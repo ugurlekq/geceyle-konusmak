@@ -84,3 +84,74 @@ a:hover { @apply decoration-amber-400; }
   animation: candle-flicker 5.5s ease-in-out infinite;
   will-change: opacity, text-shadow;
 }
+
+/* ——— ADMIN FORM STİLLERİ ——— */
+
+/* Ortak input/textarea/select görünümü */
+.input {
+  @apply w-full rounded-lg px-3 py-2
+  bg-gradient-to-b from-[#0b0b0b] to-[#181818]
+  border border-amber-400/20
+  text-white placeholder:text-white/40
+  focus:outline-none focus:border-amber-400
+  focus:ring-1 focus:ring-amber-400
+  transition;
+}
+
+/* Textarea aynı palet + sabit satır yüksekliği */
+textarea.input {
+  @apply min-h-[10rem] leading-relaxed;
+}
+
+/* Select öğesi */
+select.input {
+  @apply pr-8;
+}
+
+/* Buton */
+.btn {
+  @apply inline-flex items-center justify-center
+  rounded-lg px-4 py-2
+  border border-amber-400 text-amber-300
+  hover:bg-amber-400 hover:text-black
+  transition shadow-[0_0_10px_rgba(251,191,36,0.18)];
+}
+
+/* Admin sayfası zemini hafif amber yıkama ile */
+.admin-bg {
+  background:
+          radial-gradient(1200px 70vh at 50% 0%,
+          rgba(255,184,77,.08), transparent 65%),
+          var(--bg-grain);
+}
+
+/* Safari/Chrome autofill sarısını bastır */
+input.input:-webkit-autofill,
+textarea.input:-webkit-autofill,
+select.input:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0px 1000px #121212 inset;
+  box-shadow: 0 0 0px 1000px #121212 inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Hafif ince scrollbar (opsiyonel) */
+.admin-bg ::-webkit-scrollbar { width: 10px; height: 10px; }
+.admin-bg ::-webkit-scrollbar-thumb { background: #2a241b; border-radius: 10px; }
+.admin-bg ::-webkit-scrollbar-thumb:hover { background: #3a2f1f; }
+
+/* ——— ADMIN KARTLARI ——— */
+.admin-card {
+  @apply rounded-2xl border border-amber-400/20
+  bg-gradient-to-b from-[#0b0b0b] to-[#161311]
+  shadow-[0_0_20px_rgba(251,191,36,0.06)]
+  p-5 transition;
+}
+
+.admin-card:hover {
+  @apply border-amber-400/40 shadow-[0_0_25px_rgba(251,191,36,0.12)];
+}
+
+.admin-section-title {
+  @apply text-amber-300 mb-3 tracking-wide;
+}
