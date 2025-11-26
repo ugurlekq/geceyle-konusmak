@@ -23,7 +23,7 @@ export default function Header() {
         return pathname.startsWith(href);
     }
 
-    // Kullanıcı oturumunu oku
+    /* ------------------ Kullanıcı oturumunu oku ------------------ */
     useEffect(() => {
         (async () => {
             try {
@@ -36,35 +36,79 @@ export default function Header() {
         })();
     }, []);
 
-    // Sayı listesini API’den çek
+    /* ------------- Sayı listesini API + adminStore’dan çek ------------- */
     useEffect(() => {
         (async () => {
             try {
-                const r = await fetch('/api/content/issues', { cache: 'no-store' });
-                const d = await r.json();
-                const rawItems = Array.isArray(d?.items) ? d.items as any[] : [];
+                // 1) API’den yayınlanmış sayılar
+                let apiItems: any[] = [];
+                try {
+                    const r = await fetch('/api/content/issues', {
+                        cache: 'no-store',
+                    });
+                    const d = await r.json();
+                    apiItems = Array.isArray(d?.items) ? (d.items as any[]) : [];
+                } catch {
+                    apiItems = [];
+                }
 
-                let mapped: IssueLite[] = rawItems.map((it) => ({
+                let mappedFromApi: IssueLite[] = apiItems.map((it) => ({
                     id: it.id ?? `issue-${it.number}`,
                     number: Number(it.number),
-                    title: it.title as string | undefined,
+                    title:
+                        typeof it.title === 'string' && it.title.trim().length > 0
+                            ? it.title
+                            : undefined,
                 }));
 
-                // 🔹 Eski statik Sayı 01 yoksa mutlaka ekle
-                if (!mapped.some((i) => i.number === 1)) {
-                    mapped.push({
+                // 2) Admin panelden local (henüz publish edilmemiş) sayılar
+                let mappedLocal: IssueLite[] = [];
+                try {
+                    const mod = await import('@/lib/adminStore');
+                    const raw = (mod.getIssues?.() ?? []) as any[];
+                    mappedLocal = raw
+                        .map(
+                            (it): IssueLite => ({
+                                id: it.id ?? `local-${it.number}`,
+                                number: Number(it.number),
+                                title:
+                                    typeof it.title === 'string' &&
+                                    it.title.trim().length > 0
+                                        ? it.title.trim()
+                                        : undefined,
+                            }),
+                        )
+                        .filter((i) => !!i.number);
+                } catch {
+                    // adminStore yoksa / hata varsa görmezden gel
+                    mappedLocal = [];
+                }
+
+                // 3) Sayı 01 API’den de gelse, gelmese de mutlaka olsun
+                if (!mappedFromApi.some((i) => i.number === 1)) {
+                    mappedFromApi.push({
                         id: 'issue01',
                         number: 1,
                         title: 'Geceyle Konuşmak',
                     });
                 }
 
-                // büyükten küçüğe sırala (son sayı en üstte olsun)
-                mapped = mapped.sort((a, b) => b.number - a.number);
+                // 4) API + local -> number bazlı tekilleştir ve sırala
+                const byNumber = new Map<number, IssueLite>();
+                for (const it of [...mappedFromApi, ...mappedLocal]) {
+                    if (!it.number) continue;
+                    if (!byNumber.has(it.number)) {
+                        byNumber.set(it.number, it);
+                    }
+                }
 
-                setIssues(mapped);
+                const finalList = Array.from(byNumber.values()).sort(
+                    (a, b) => b.number - a.number,
+                );
+
+                setIssues(finalList);
             } catch {
-                // API tamamen patlarsa en azından Sayı 01’i göster
+                // Her şey patlarsa en azından Sayı 01’i göster
                 setIssues([
                     { id: 'issue01', number: 1, title: 'Geceyle Konuşmak' },
                 ]);
@@ -72,7 +116,7 @@ export default function Header() {
         })();
     }, []);
 
-    // Dropdown dışında tıklanınca kapat
+    /* ------------- Dropdown dışında tıklanınca kapat ------------- */
     useEffect(() => {
         function onClick(e: MouseEvent) {
             if (!ddRef.current) return;
@@ -85,9 +129,10 @@ export default function Header() {
     }, []);
 
     function gotoIssue(number: number) {
-        const href = number === 1
-            ? '/issue01'
-            : `/issues/${String(number).padStart(2, '0')}`;
+        const href =
+            number === 1
+                ? '/issue01'
+                : `/issues/${String(number).padStart(2, '0')}`;
 
         setOpen(false);
         router.push(href);
@@ -116,7 +161,6 @@ export default function Header() {
 
                 {/* Sağ taraf: sayı seçici + linkler */}
                 <div className="flex items-center gap-3">
-
                     {/* Sayı dropdown */}
                     <div className="relative" ref={ddRef}>
                         <button
@@ -136,8 +180,12 @@ export default function Header() {
                                 <div className="max-h-80 overflow-y-auto py-1">
                                     {issues.map((i) => {
                                         const label = i.title
-                                            ? `Sayı ${String(i.number).padStart(2, '0')} — ${i.title}`
-                                            : `Sayı ${String(i.number).padStart(2, '0')}`;
+                                            ? `Sayı ${String(
+                                                i.number,
+                                            ).padStart(2, '0')} — ${i.title}`
+                                            : `Sayı ${String(
+                                                i.number,
+                                            ).padStart(2, '0')}`;
 
                                         return (
                                             <button
@@ -174,7 +222,7 @@ export default function Header() {
                     >
                         Yazarlar
                     </Link>
-                    
+
                     <Link
                         href="/subscribe"
                         className={`rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-black/30 hover:bg-white/10 transition ${
@@ -185,15 +233,12 @@ export default function Header() {
                     </Link>
 
                     {user ? (
-                        <>
-                            {/* E-posta’yı kaldırdık */}
-                            <button
-                                onClick={logout}
-                                className="rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-white/5 hover:bg-white/10 transition"
-                            >
-                                Çıkış
-                            </button>
-                        </>
+                        <button
+                            onClick={logout}
+                            className="rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-white/5 hover:bg-white/10 transition"
+                        >
+                            Çıkış
+                        </button>
                     ) : (
                         <Link
                             href="/login"
