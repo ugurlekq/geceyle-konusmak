@@ -1,9 +1,27 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+﻿// pages/api/auth.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { serialize } from 'cookie';
+import { UserSession } from '@/types';
 
-export async function POST(req: NextRequest){
-    const { email } = await req.json();
-    if(!email) return NextResponse.json({ error: 'email required' }, { status: 400 });
-    const res = NextResponse.json({ ok: true });
-    res.cookies.set('sa_email', email, { httpOnly: false, path: '/', maxAge: 60*60*24*365 });
-    return res;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@geceylekonusmak.org';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+    if (req.method !== 'POST') return res.status(405).end();
+
+    const { email } = req.body as { email?: string };
+    if (!email) return res.status(400).json({ error: 'email required' });
+
+    const role: UserSession['role'] = email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'user';
+    const value: UserSession = { email, role };
+
+    res.setHeader(
+        'Set-Cookie',
+        serialize('gkm_user', JSON.stringify(value), {
+            httpOnly: true,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 30, // 30 gün
+        })
+    );
+    res.status(200).json(value);
 }

@@ -1,14 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireStripe } from "@/lib/stripe";
+// pages/api/me.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { parse } from 'cookie';
+import { UserSession } from '@/types';
 
-export async function POST(req: NextRequest) {
-    const { email } = await req.json();
-    if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
-
-    const stripe = requireStripe();
-    const { data } = await stripe.customers.list({ email, limit: 1 });
-    const customer = data[0];
-    if (!customer) return NextResponse.json({ error: "not found" }, { status: 404 });
-
-    return NextResponse.json({ id: customer.id });
+export default function handler(req: NextApiRequest, res: NextApiResponse<UserSession | { ok: false }>) {
+    const raw = req.headers.cookie ? parse(req.headers.cookie) : {};
+    const v = raw['gkm_user'];
+    if (!v) return res.status(200).json({ ok: false } as any);
+    try {
+        const data = JSON.parse(v) as UserSession;
+        return res.status(200).json(data);
+    } catch {
+        return res.status(200).json({ ok: false } as any);
+    }
 }
