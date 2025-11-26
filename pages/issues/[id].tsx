@@ -179,7 +179,7 @@ export default function IssuePage({ issueNo, serverArticles }: Props) {
 }
 
 export const getStaticPaths: GetStaticPaths = async () => {
-    const issues = (await import("@/content/issues/index.json")).default as any[];
+    const issues = (await import("@/content/issues.json")).default as any[];
     const paths = issues.map(it => ({
         params: { id: String(it.number).padStart(2, "0") },
     }));
