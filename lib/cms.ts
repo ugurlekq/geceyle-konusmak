@@ -5,20 +5,20 @@ import matter from "gray-matter";
 import { marked } from "marked";
 
 export type Article = {
-  slug: string;                 // ör: "noura/duygularin-hafizasi..."
+  slug: string;                 // Ör: "arin-kael/articles/zihnin-arka-plani"
   title: string;
   html: string;
   date?: string;
   excerpt?: string | null;
   authorId?: string;
-  // medya alanları
+  // Medya alanları
   embedUrl?: string;
   audioUrl?: string;
-  // DERGİ NUMARASI
-  issueNumber?: number;
+  // (frontmatter'da varsa) sayı numarası da taşıyabilelim
+  issueNumber?: number | null;
 };
 
-/* -------------------- İçerik klasörünü akıllı şekilde çöz -------------------- */
+/* -------------------- İçerik klasörünü çöz -------------------- */
 function resolveContentDir(): string {
   const candidates = [
     path.join(process.cwd(), "content"),
@@ -35,7 +35,8 @@ function resolveContentDir(): string {
 
 const contentDir = resolveContentDir();
 
-/* ------------------------------- Yardımcılar --------------------------------- */
+/* --------------------------- Yardımcılar --------------------------- */
+
 // Dizinleri RECURSIVE gez, tüm .md dosyalarını "content/"e göre relatif yoluyla döndür
 function walkMarkdownFiles(dir: string, base: string = dir): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -46,31 +47,72 @@ function walkMarkdownFiles(dir: string, base: string = dir): string[] {
     if (e.isDirectory()) {
       files.push(...walkMarkdownFiles(full, base));
     } else if (e.isFile() && e.name.endsWith(".md")) {
+      // slug: alt klasör yolunu koru, Windows'ta "/" normalize et
       const rel = path.relative(base, full).replace(/\\/g, "/");
-      files.push(rel.replace(/\.md$/, ""));
+      files.push(rel.replace(/\.md$/, "")); // ".md" uzantısını at
     }
   }
   return files;
 }
 
-/* ----------------------------- Public Fonksiyonlar ---------------------------- */
+// Tüm relatif yolları tek yerde cache’leyelim
+let cachedRelSlugs: string[] | null = null;
+function getAllRelSlugs(): string[] {
+  if (!cachedRelSlugs) {
+    cachedRelSlugs = walkMarkdownFiles(contentDir);
+  }
+  return cachedRelSlugs;
+}
+
+/**
+ * Verilen slug için dosya yolunu bul:
+ *  - Önce tam eşleşme (ör: "arin-kael/articles/iyilesmek")
+ *  - Bulamazsa son parçaya göre (ör: "iyilesmek" → ".../iyilesmek")
+ */
+function resolveFileSlug(slug: string): string {
+  const all = getAllRelSlugs();
+
+  // 1) Tam eşleşme
+  if (all.includes(slug)) return slug;
+
+  const last = slug.split("/").pop() || slug;
+
+  // 2) Sadece dosya adına göre eşleşme
+  const found =
+      all.find((rel) => rel === last) ||
+      all.find((rel) => rel.endsWith("/" + last));
+
+  if (!found) {
+    throw new Error(`Article not found for slug: ${slug}`);
+  }
+  return found;
+}
+
+/* -------------------------- Public Fonksiyonlar -------------------------- */
+
 export function getArticleSlugs(): string[] {
-  return walkMarkdownFiles(contentDir);
+  // Artık alt klasörleri de kapsıyor
+  return getAllRelSlugs();
 }
 
 export function getArticle(slug: string): Article {
-  const fullPath = path.join(contentDir, slug + ".md");
+  // 🔴 ASIL FİX BURASI: slug'ı dosya sisteminde karşılığı olan
+  // relatif path'e çeviriyoruz.
+  const fileSlug = resolveFileSlug(slug);
+
+  const fullPath = path.join(contentDir, fileSlug + ".md");
   if (!fs.existsSync(fullPath)) {
-    throw new Error(`Article not found: ${slug}`);
+    throw new Error(`Article not found at path: ${fullPath}`);
   }
 
   const file = fs.readFileSync(fullPath, "utf-8");
   const { data, content } = matter(file);
+
   const html = marked.parse(content) as string;
 
   return {
-    slug,
-    title: (data.title as string) || slug,
+    slug: fileSlug, // makaleyi linklerken hâlâ bu değeri kullanıyorsun
+    title: (data.title as string) || fileSlug,
     date: (data.date as string) || undefined,
     excerpt: (data.excerpt as string | undefined) ?? null,
     authorId: (data.authorId as string | undefined) ?? undefined,
@@ -79,101 +121,32 @@ export function getArticle(slug: string): Article {
     audioUrl: (data.audioUrl as string | undefined) ?? undefined,
     issueNumber:
         typeof data.issueNumber !== "undefined"
-            ? Number(data.issueNumber) || undefined
-            : undefined,
+            ? Number(data.issueNumber) || null
+            : null,
   };
 }
 
-/* ---- JSON meta (content/articles/index.json) oku ---- */
-function readArticlesIndex(): any[] {
-  const candidates = [
-    path.join(contentDir, "articles", "index.json"), // senin kullandığın yer
-    path.join(contentDir, "index.json"),             // olası eski konum
-  ];
-
-  for (const p of candidates) {
-    if (!fs.existsSync(p)) continue;
-    try {
-      const raw = fs.readFileSync(p, "utf-8");
-      const data = JSON.parse(raw);
-      if (Array.isArray(data)) return data;
-    } catch (e) {
-      console.warn("getAllArticles: index.json okuma hatası:", p, e);
-    }
-  }
-  return [];
-}
-
 export function getAllArticles(): Article[] {
-  // 1) Tüm markdown yazılarını oku
-  const mdSlugs = getArticleSlugs();
-  const mdMap = new Map<string, Article>();
-
-  for (const slug of mdSlugs) {
-    try {
-      mdMap.set(slug, getArticle(slug));
-    } catch (e) {
-      console.warn("getAllArticles: markdown okunamadı:", slug, e);
-    }
-  }
-
-  // 2) JSON meta’yı oku
-  const metaList = readArticlesIndex();
-  const result: Article[] = [];
-
-  for (const meta of metaList) {
-    const slug = String(meta.slug);
-    const base = mdMap.get(slug); // slug bire bir uyuşuyorsa md ile eşleşir
-    if (base) {
-      mdMap.delete(slug); // ekleyince tekrar eklemeyelim
-    }
-
-    const merged: Article = {
-      ...(base ?? {
-        slug,
-        title: slug,
-        html: "", // md yoksa boş body (şimdilik)
-      }),
-      title: meta.title ?? base?.title ?? slug,
-      excerpt:
-          typeof meta.excerpt === "string"
-              ? meta.excerpt
-              : base?.excerpt ?? null,
-      authorId: meta.authorId ?? base?.authorId,
-      date: meta.date ?? base?.date,
-      embedUrl: meta.embedUrl ?? base?.embedUrl,
-      audioUrl: meta.audioUrl ?? base?.audioUrl,
-      issueNumber:
-          typeof meta.issueNumber !== "undefined"
-              ? Number(meta.issueNumber) || undefined
-              : base?.issueNumber,
-    };
-
-    result.push(merged);
-  }
-
-  // 3) JSON’da hiç geçmeyen eski md yazıları da ekle (1. sayı vs için güvenlik)
-  for (const leftover of mdMap.values()) {
-    result.push(leftover);
-  }
-
-  // 4) Tarihe göre yeni → eski sırala
-  result.sort((a, b) => {
+  const all = getArticleSlugs().map(getArticle);
+  // Tarihe göre (varsa) yeni → eski sırala; tarih yoksa en sona at
+  return all.sort((a, b) => {
     const ta = a.date ? Date.parse(a.date) : 0;
     const tb = b.date ? Date.parse(b.date) : 0;
     return tb - ta;
   });
-
-  return result;
 }
 
-/* ------------------------------- Ek Yardımcılar ------------------------------ */
+/* İstersen yazar bazlı helper'lar */
+
 export function getArticlesByAuthor(authorId: string): Article[] {
   return getAllArticles().filter((a) => a.authorId === authorId);
 }
 
 export function getAllArticleMeta(): Array<
-    Pick<Article, "slug" | "title" | "excerpt" | "date" | "authorId">
+    Pick<
+        Article,
+        "slug" | "title" | "excerpt" | "date" | "authorId" | "issueNumber"
+    >
 > {
   return getAllArticles().map((a) => ({
     slug: a.slug,
@@ -181,5 +154,6 @@ export function getAllArticleMeta(): Array<
     excerpt: a.excerpt ?? null,
     date: a.date,
     authorId: a.authorId,
+    issueNumber: a.issueNumber ?? null,
   }));
 }
