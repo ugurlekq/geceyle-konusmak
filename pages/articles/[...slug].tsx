@@ -2,11 +2,19 @@
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import { motion } from "framer-motion";
-
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
 
-/* ----------------- Ortak tipler ----------------- */
+// ---- Ortak tip ----
+type ArticleLike = {
+    slug: string;
+    title: string;
+    body?: string;
+    html?: string;
+    embedUrl?: string | null;
+    audioUrl?: string | null;
+    issueNumber?: number | null;
+};
 
 type Props = {
     title: string | null;
@@ -16,89 +24,7 @@ type Props = {
     issueNumber?: number | null;
 };
 
-/* ----------------- Sayfa bileşeni ----------------- */
-
-export default function ArticlePage({
-                                        title,
-                                        html,
-                                        embedUrl,
-                                        audioUrl,
-                                        issueNumber,
-                                    }: Props) {
-    const finalTitle = title ?? "Yazı";
-    const embed = embedUrl ? toEmbed(embedUrl) : null;
-    const issueNo =
-        typeof issueNumber === "number" && !Number.isNaN(issueNumber)
-            ? issueNumber
-            : null;
-
-    const issueHref =
-        issueNo && issueNo > 1
-            ? `/issues/${String(issueNo).padStart(2, "0")}`
-            : "/issue01";
-
-    return (
-        <>
-            <Head>
-                <title>{finalTitle}</title>
-            </Head>
-
-            <ArticleLayout title={finalTitle}>
-                {(embed || audioUrl) && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1.2 }}
-                    >
-                        <div className="mb-10 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
-                            {embed ? (
-                                <iframe
-                                    src={embed.src}
-                                    width="100%"
-                                    height={embed.height}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowFullScreen
-                                    className="rounded-2xl"
-                                    title={`${finalTitle} — embed`}
-                                />
-                            ) : (
-                                <div className="p-4">
-                                    <audio
-                                        src={audioUrl!}
-                                        controls
-                                        className="w-full rounded-lg bg-black/30"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 1.2 }}
-                >
-                    {html ? (
-                        <div
-                            className="prose prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: html }}
-                        />
-                    ) : (
-                        <p className="text-white/60">Bu yazı bulunamadı.</p>
-                    )}
-                </motion.div>
-
-                <div className="mt-10">
-                    <BackLink href={issueHref} label="← Sayıya Dön" />
-                </div>
-            </ArticleLayout>
-        </>
-    );
-}
-
-/* ----------------- embed helper ----------------- */
-
+// ----------------- Embed helper -----------------
 function toEmbed(url: string): { src: string; height: number } | null {
     if (!url) return null;
 
@@ -119,11 +45,12 @@ function toEmbed(url: string): { src: string; height: number } | null {
 
     if (url.includes("youtu.be/")) {
         const id = url.split("youtu.be/")[1]?.split(/[?&]/)[0];
-        if (id)
+        if (id) {
             return {
                 src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
                 height: 360,
             };
+        }
     }
 
     if (url.includes("open.spotify.com/")) {
@@ -142,45 +69,131 @@ function toEmbed(url: string): { src: string; height: number } | null {
     return { src: url, height: 360 };
 }
 
-/* ----------------- fs ile JSON okuma ----------------- */
-
+// -------------- Dinamik JSON okuma (optional) --------------
 import fs from "fs";
 import path from "path";
 
-type ArticleLike = {
-    slug: string;
-    title: string;
-    body?: string;
-    html?: string;
-    embedUrl?: string | null;
-    audioUrl?: string | null;
-    issueNumber?: number | null;
-};
-
-/** data/articles.json içindeki (commit edilmiş) dinamik yazıları oku */
+/** data/articles.json içindeki admin panel yazılarını oku (sadece build-time!) */
 function readDynamicArticles(): ArticleLike[] {
     try {
         const filePath = path.join(process.cwd(), "data", "articles.json");
+        if (!fs.existsSync(filePath)) return [];
         const raw = fs.readFileSync(filePath, "utf-8");
         const parsed = JSON.parse(raw);
         const items = Array.isArray(parsed?.items) ? parsed.items : parsed;
-        return Array.isArray(items) ? (items as ArticleLike[]) : [];
+        if (!Array.isArray(items)) return [];
+        return items as ArticleLike[];
     } catch {
         return [];
     }
 }
 
-/* ----------------- SSG ----------------- */
+// ----------------- Sayfa bileşeni -----------------
+export default function ArticlePage({
+                                        title,
+                                        html,
+                                        embedUrl,
+                                        audioUrl,
+                                        issueNumber,
+                                    }: Props) {
+    const finalTitle = title ?? "Yazı";
+    const finalEmbed = embedUrl ?? null;
+    const finalAudio = audioUrl ?? null;
 
+    const finalIssueNo =
+        typeof issueNumber === "number" ? issueNumber : null;
+
+    const issueHref =
+        finalIssueNo && finalIssueNo > 1
+            ? `/issues/${String(finalIssueNo).padStart(2, "0")}`
+            : "/issue01";
+
+    const embed = finalEmbed ? toEmbed(finalEmbed) : null;
+
+    const hasContent = !!html;
+
+    return (
+        <>
+            <Head>
+                <title>{finalTitle}</title>
+            </Head>
+
+            <ArticleLayout title={finalTitle}>
+                {(embed || finalAudio) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1.2 }}
+                    >
+                        <div className="mb-10 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
+                            {embed ? (
+                                <iframe
+                                    src={embed.src}
+                                    width="100%"
+                                    height={embed.height}
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                    className="rounded-2xl"
+                                    title={`${finalTitle} — embed`}
+                                />
+                            ) : (
+                                <div className="p-4">
+                                    <audio
+                                        src={finalAudio!}
+                                        controls
+                                        className="w-full rounded-lg bg-black/30"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 1.2 }}
+                >
+                    {hasContent ? (
+                        <div
+                            className="prose prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: html! }}
+                        />
+                    ) : (
+                        <p className="text-white/60">
+                            Bu yazı bulunamadı (production’da md dosyası / json’u yok).
+                        </p>
+                    )}
+                </motion.div>
+
+                <div className="mt-10">
+                    <BackLink href={issueHref} label="← Sayıya Dön" />
+                </div>
+            </ArticleLayout>
+        </>
+    );
+}
+
+// ----------------- SSG -----------------
 export const getStaticPaths: GetStaticPaths = async () => {
     const { getArticleSlugs } = await import("@/lib/cms");
-    const slugs = getArticleSlugs();
+
+    // 1) content altındaki tüm .md dosyaları
+    const mdSlugs = getArticleSlugs(); // örn: "arin-kael/articles/zihnin-arka-plani"
+
+    // 2) data/articles.json içindeki sluglar (eğer commit ettiysen)
+    const dynSlugs = readDynamicArticles()
+        .map((a) => a.slug)
+        .filter(Boolean);
+
+    const allSlugs = Array.from(new Set([...mdSlugs, ...dynSlugs]));
 
     return {
-        paths: slugs.map((s) => ({
+        paths: allSlugs.map((s) => ({
             params: { slug: s.split("/") },
         })),
-        // Yeni yazılar için fallback: blocking → ilk istekte build edilir
+        // Eğer `output: "export"` kullanmıyorsan burada "blocking" de olur.
+        // Daha garanti olsun diye prod’da 404 almak istemiyorsak blocking:
         fallback: "blocking",
     };
 };
@@ -194,7 +207,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
 
     let a: any | null = null;
 
-    // 1) Markdown’dan dene
+    // 1) Markdown’dan dene (content klasörü)
     try {
         a = getArticle(fullSlug);
     } catch {
@@ -214,7 +227,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
             return {
                 props: {
                     title: dyn.title ?? null,
-                    html: dyn.html ?? dyn.body ?? null,
+                    html: dyn.body ?? null,
                     embedUrl: dyn.embedUrl ?? null,
                     audioUrl: dyn.audioUrl ?? null,
                     issueNumber:
@@ -227,26 +240,32 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
         }
     }
 
-    // 3) Markdown bulunduysa
-    if (a) {
+    // 3) Hâlâ yoksa boş props (component "bulunamadı" diyecek)
+    if (!a) {
         return {
             props: {
-                title: a.title ?? null,
-                html: a.html ?? null,
-                embedUrl: a.embedUrl ?? null,
-                audioUrl: a.audioUrl ?? null,
-                issueNumber:
-                    typeof a.issueNumber !== "undefined"
-                        ? Number(a.issueNumber) || 1
-                        : null,
+                title: null,
+                html: null,
+                embedUrl: null,
+                audioUrl: null,
+                issueNumber: null,
             },
             revalidate: 60,
         };
     }
 
-    // 4) Hiçbir şey bulunamadı → 404
+    // Markdown bulunduysa normal şekilde dön
     return {
-        notFound: true,
+        props: {
+            title: a.title ?? null,
+            html: a.html ?? null,
+            embedUrl: a.embedUrl ?? null,
+            audioUrl: a.audioUrl ?? null,
+            issueNumber:
+                typeof a.issueNumber !== "undefined"
+                    ? Number(a.issueNumber) || 1
+                    : null,
+        },
         revalidate: 60,
     };
 };
