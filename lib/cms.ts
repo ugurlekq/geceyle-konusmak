@@ -41,9 +41,7 @@ type ArticleIndexEntry = {
 
 function resolveContentDir(): string {
   const candidates = [
-    path.join(process.cwd(), "content", "articles"),
     path.join(process.cwd(), "content"),
-    path.join(process.cwd(), "src", "content", "articles"),
     path.join(process.cwd(), "src", "content"),
   ];
 
@@ -56,6 +54,7 @@ function resolveContentDir(): string {
       candidates.map((c) => " - " + c).join("\n")
   );
 }
+
 
 /** Verilen dizin altındaki tüm .md dosyalarının relatif yol listesini döndür. */
 function walkMarkdownFiles(dir: string, base: string = dir): string[] {
@@ -105,41 +104,28 @@ function resolveFileSlug(slug: string): string | null {
  * JSON index (content/articles/index.json)
  * -------------------------------------------------- */
 
-/**
- * content/articles/index.json (veya alternatif yollar) dosyasını
- * HER çağrıda diskten okuyoruz.
- * Böylece admin panelde başlık / slug / embedUrl değişince
- * dev server'ı yeniden başlatmaya gerek kalmıyor.
- */
+let cachedIndex: ArticleIndexEntry[] | null = null;
+
 function readArticleIndex(): ArticleIndexEntry[] {
-  const candidates = [
-    path.join(process.cwd(), "content", "articles", "index.json"),
-    path.join(process.cwd(), "content", "index.json"),
-    path.join(process.cwd(), "src", "content", "articles", "index.json"),
-    path.join(process.cwd(), "src", "content", "index.json"),
-  ];
+  if (cachedIndex) return cachedIndex;
 
-  for (const p of candidates) {
-    try {
-      if (!fs.existsSync(p)) continue;
+  try {
+    const p = path.join(process.cwd(), "content", "articles", "index.json");
+    const raw = fs.readFileSync(p, "utf-8");
+    const parsed = JSON.parse(raw);
 
-      const raw = fs.readFileSync(p, "utf-8");
-      const parsed = JSON.parse(raw);
-
-      if (Array.isArray(parsed)) {
-        return parsed as ArticleIndexEntry[];
-      } else if (Array.isArray((parsed as any).items)) {
-        return (parsed as any).items as ArticleIndexEntry[];
-      } else {
-        return [];
-      }
-    } catch {
-      // bir sonraki path'e geç
+    if (Array.isArray(parsed)) {
+      cachedIndex = parsed as ArticleIndexEntry[];
+    } else if (Array.isArray((parsed as any).items)) {
+      cachedIndex = (parsed as any).items as ArticleIndexEntry[];
+    } else {
+      cachedIndex = [];
     }
+  } catch {
+    cachedIndex = [];
   }
 
-  // Hiçbiri bulunamazsa boş dizi
-  return [];
+  return cachedIndex;
 }
 
 /** index.json içinden slug'a göre meta bul – küçük/büyük harfe duyarsız. */
@@ -221,7 +207,8 @@ export function getArticle(slug: string): Article {
       slug;
 
   const date: string | undefined =
-      (fm.date as string | undefined) ?? (meta?.date as string | undefined);
+      (fm.date as string | undefined) ??
+      (meta?.date as string | undefined);
 
   const excerpt: string | null =
       (fm.excerpt as string | undefined) ??
@@ -254,7 +241,8 @@ export function getArticle(slug: string): Article {
   const issueNumber =
       typeof rawIssue !== "undefined" ? Number(rawIssue) || null : null;
 
-  const finalSlug = (meta?.slug as string | undefined) ?? fileSlug ?? slug;
+  const finalSlug =
+      (meta?.slug as string | undefined) ?? fileSlug ?? slug;
 
   return {
     slug: finalSlug,
@@ -297,10 +285,7 @@ export function getArticlesByAuthor(authorId: string): Article[] {
 }
 
 export function getAllArticleMeta(): Array<
-    Pick<
-        Article,
-        "slug" | "title" | "excerpt" | "date" | "authorId" | "issueNumber"
-    >
+    Pick<Article, "slug" | "title" | "excerpt" | "date" | "authorId" | "issueNumber">
 > {
   return getAllArticles().map((a) => ({
     slug: a.slug,
