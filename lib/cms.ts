@@ -41,9 +41,7 @@ type ArticleIndexEntry = {
 
 function resolveContentDir(): string {
   const candidates = [
-    path.join(process.cwd(), "content", "articles"),
     path.join(process.cwd(), "content"),
-    path.join(process.cwd(), "src", "content", "articles"),
     path.join(process.cwd(), "src", "content"),
   ];
 
@@ -56,6 +54,7 @@ function resolveContentDir(): string {
       candidates.map((c) => " - " + c).join("\n")
   );
 }
+
 
 /** Verilen dizin altındaki tüm .md dosyalarının relatif yol listesini döndür. */
 function walkMarkdownFiles(dir: string, base: string = dir): string[] {
