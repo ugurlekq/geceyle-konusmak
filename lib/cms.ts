@@ -11,14 +11,13 @@ export type Article = {
   date?: string;
   excerpt?: string | null;
   authorId?: string;
-  // Medya alanları
   embedUrl?: string;
   audioUrl?: string;
-  // (frontmatter'da varsa) sayı numarası da taşıyabilelim
   issueNumber?: number | null;
 };
 
-/* -------------------- İçerik klasörünü çöz -------------------- */
+/* -------------------- İçerik klasörünü bul -------------------- */
+
 function resolveContentDir(): string {
   const candidates = [
     path.join(process.cwd(), "content"),
@@ -33,11 +32,8 @@ function resolveContentDir(): string {
   );
 }
 
-const contentDir = resolveContentDir();
+/* -------------------- Markdown dosyalarını tara -------------------- */
 
-/* --------------------------- Yardımcılar --------------------------- */
-
-// Dizinleri RECURSIVE gez, tüm .md dosyalarını "content/"e göre relatif yoluyla döndür
 function walkMarkdownFiles(dir: string, base: string = dir): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   const files: string[] = [];
@@ -47,7 +43,6 @@ function walkMarkdownFiles(dir: string, base: string = dir): string[] {
     if (e.isDirectory()) {
       files.push(...walkMarkdownFiles(full, base));
     } else if (e.isFile() && e.name.endsWith(".md")) {
-      // slug: alt klasör yolunu koru, Windows'ta "/" normalize et
       const rel = path.relative(base, full).replace(/\\/g, "/");
       files.push(rel.replace(/\.md$/, "")); // ".md" uzantısını at
     }
@@ -55,19 +50,15 @@ function walkMarkdownFiles(dir: string, base: string = dir): string[] {
   return files;
 }
 
-// Tüm relatif yolları tek yerde cache’leyelim
-let cachedRelSlugs: string[] | null = null;
 function getAllRelSlugs(): string[] {
-  if (!cachedRelSlugs) {
-    cachedRelSlugs = walkMarkdownFiles(contentDir);
-  }
-  return cachedRelSlugs;
+  const contentDir = resolveContentDir();
+  return walkMarkdownFiles(contentDir);
 }
 
 /**
  * Verilen slug için dosya yolunu bul:
- *  - Önce tam eşleşme (ör: "arin-kael/articles/iyilesmek")
- *  - Bulamazsa son parçaya göre (ör: "iyilesmek" → ".../iyilesmek")
+ *  - Önce tam eşleşme ("arin-kael/articles/iyilesmek")
+ *  - Sonra sadece son parçaya göre ("iyilesmek")
  */
 function resolveFileSlug(slug: string): string {
   const all = getAllRelSlugs();
@@ -88,16 +79,14 @@ function resolveFileSlug(slug: string): string {
   return found;
 }
 
-/* -------------------------- Public Fonksiyonlar -------------------------- */
+/* -------------------------- Public API -------------------------- */
 
 export function getArticleSlugs(): string[] {
-  // Artık alt klasörleri de kapsıyor
   return getAllRelSlugs();
 }
 
 export function getArticle(slug: string): Article {
-  // 🔴 ASIL FİX BURASI: slug'ı dosya sisteminde karşılığı olan
-  // relatif path'e çeviriyoruz.
+  const contentDir = resolveContentDir();
   const fileSlug = resolveFileSlug(slug);
 
   const fullPath = path.join(contentDir, fileSlug + ".md");
@@ -107,11 +96,10 @@ export function getArticle(slug: string): Article {
 
   const file = fs.readFileSync(fullPath, "utf-8");
   const { data, content } = matter(file);
-
   const html = marked.parse(content) as string;
 
   return {
-    slug: fileSlug, // makaleyi linklerken hâlâ bu değeri kullanıyorsun
+    slug: fileSlug,
     title: (data.title as string) || fileSlug,
     date: (data.date as string) || undefined,
     excerpt: (data.excerpt as string | undefined) ?? null,
@@ -128,7 +116,6 @@ export function getArticle(slug: string): Article {
 
 export function getAllArticles(): Article[] {
   const all = getArticleSlugs().map(getArticle);
-  // Tarihe göre (varsa) yeni → eski sırala; tarih yoksa en sona at
   return all.sort((a, b) => {
     const ta = a.date ? Date.parse(a.date) : 0;
     const tb = b.date ? Date.parse(b.date) : 0;
@@ -136,17 +123,12 @@ export function getAllArticles(): Article[] {
   });
 }
 
-/* İstersen yazar bazlı helper'lar */
-
 export function getArticlesByAuthor(authorId: string): Article[] {
   return getAllArticles().filter((a) => a.authorId === authorId);
 }
 
 export function getAllArticleMeta(): Array<
-    Pick<
-        Article,
-        "slug" | "title" | "excerpt" | "date" | "authorId" | "issueNumber"
-    >
+    Pick<Article, "slug" | "title" | "excerpt" | "date" | "authorId" | "issueNumber">
 > {
   return getAllArticles().map((a) => ({
     slug: a.slug,

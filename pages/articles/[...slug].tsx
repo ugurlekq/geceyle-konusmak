@@ -2,15 +2,18 @@
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
+import { authors } from "@/data/authors";
+import { getArticleSlugs, getArticle } from "@/lib/cms";
 
-// ---- Ortak tip ----
-type ArticleLike = {
-    slug: string;
+// Sadece adminStore fallback'i için (local dev'te, isteğe bağlı)
+type RuntimeArticle = {
     title: string;
     body?: string;
-    html?: string;
     embedUrl?: string | null;
     audioUrl?: string | null;
     issueNumber?: number | null;
@@ -24,84 +27,55 @@ type Props = {
     issueNumber?: number | null;
 };
 
-// ----------------- Embed helper -----------------
-function toEmbed(url: string): { src: string; height: number } | null {
-    if (!url) return null;
+export default function ArticlePage(props: Props) {
+    const { title, html, embedUrl, audioUrl, issueNumber } = props;
 
-    if (url.includes("youtube.com/watch")) {
-        const u = new URL(url);
-        const v = u.searchParams.get("v");
-        if (!v) return null;
-        const qs = new URLSearchParams();
-        const list = u.searchParams.get("list");
-        if (list) qs.set("list", list);
-        qs.set("rel", "0");
-        qs.set("modestbranding", "1");
-        return {
-            src: `https://www.youtube.com/embed/${v}?${qs.toString()}`,
-            height: 360,
-        };
-    }
+    const router = useRouter();
+    const [rt, setRt] = useState<RuntimeArticle | null>(null);
 
-    if (url.includes("youtu.be/")) {
-        const id = url.split("youtu.be/")[1]?.split(/[?&]/)[0];
-        if (id) {
-            return {
-                src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
-                height: 360,
-            };
-        }
-    }
+    // İsteğe bağlı: sadece localStorage'daki adminStore'dan okuma (dev için)
+    useEffect(() => {
+        if (html) return; // zaten md'den gelmişse gerek yok
 
-    if (url.includes("open.spotify.com/")) {
-        return {
-            src: url.replace("open.spotify.com/", "open.spotify.com/embed/"),
-            height: 180,
-        };
-    }
+        const slugParts = ((router.query.slug as string[]) || []).filter(Boolean);
+        if (!slugParts.length) return;
+        const fullSlug = slugParts.join("/");
+        const last = slugParts[slugParts.length - 1];
 
-    if (url.includes("soundcloud.com/")) {
-        const player =
-            "https://w.soundcloud.com/player/?url=" + encodeURIComponent(url);
-        return { src: player, height: 166 };
-    }
+        (async () => {
+            try {
+                const { getArticles } = await import("@/lib/adminStore");
+                const list = getArticles();
+                const found =
+                    list.find((a: any) => a.slug === fullSlug) ||
+                    list.find((a: any) => a.slug === last) ||
+                    list.find(
+                        (a: any) =>
+                            typeof a.slug === "string" && a.slug.endsWith("/" + last)
+                    );
 
-    return { src: url, height: 360 };
-}
+                if (found) {
+                    setRt({
+                        title: found.title,
+                        body: found.body,
+                        embedUrl: found.embedUrl ?? null,
+                        audioUrl: found.audioUrl ?? null,
+                        issueNumber: Number(found.issueNumber) || 1,
+                    });
+                }
+            } catch {
+                // prod'da adminStore olmayabilir → sessiz geç
+            }
+        })();
+    }, [router.query.slug, html]);
 
-// -------------- Dinamik JSON okuma (optional) --------------
-import fs from "fs";
-import path from "path";
-
-/** data/articles.json içindeki admin panel yazılarını oku (sadece build-time!) */
-function readDynamicArticles(): ArticleLike[] {
-    try {
-        const filePath = path.join(process.cwd(), "data", "articles.json");
-        if (!fs.existsSync(filePath)) return [];
-        const raw = fs.readFileSync(filePath, "utf-8");
-        const parsed = JSON.parse(raw);
-        const items = Array.isArray(parsed?.items) ? parsed.items : parsed;
-        if (!Array.isArray(items)) return [];
-        return items as ArticleLike[];
-    } catch {
-        return [];
-    }
-}
-
-// ----------------- Sayfa bileşeni -----------------
-export default function ArticlePage({
-                                        title,
-                                        html,
-                                        embedUrl,
-                                        audioUrl,
-                                        issueNumber,
-                                    }: Props) {
-    const finalTitle = title ?? "Yazı";
-    const finalEmbed = embedUrl ?? null;
-    const finalAudio = audioUrl ?? null;
+    const finalTitle = rt?.title ?? title ?? "Yazı";
+    const finalEmbed = rt?.embedUrl ?? embedUrl ?? null;
+    const finalAudio = rt?.audioUrl ?? audioUrl ?? null;
 
     const finalIssueNo =
-        typeof issueNumber === "number" ? issueNumber : null;
+        rt?.issueNumber ??
+        (typeof issueNumber === "number" ? issueNumber : null);
 
     const issueHref =
         finalIssueNo && finalIssueNo > 1
@@ -109,8 +83,7 @@ export default function ArticlePage({
             : "/issue01";
 
     const embed = finalEmbed ? toEmbed(finalEmbed) : null;
-
-    const hasContent = !!html;
+    const showLoading = !html && !rt;
 
     return (
         <>
@@ -154,14 +127,22 @@ export default function ArticlePage({
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3, duration: 1.2 }}
                 >
-                    {hasContent ? (
+                    {html ? (
                         <div
                             className="prose prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: html! }}
+                            dangerouslySetInnerHTML={{ __html: html }}
                         />
+                    ) : rt?.body ? (
+                        <div className="prose prose-invert max-w-none">
+                            <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                                {rt.body}
+                            </p>
+                        </div>
+                    ) : showLoading ? (
+                        <p className="text-white/60">Yükleniyor…</p>
                     ) : (
                         <p className="text-white/60">
-                            Bu yazı bulunamadı (production’da md dosyası / json’u yok).
+                            Bu yazı bulunamadı (production’da ilgili md dosyası yok).
                         </p>
                     )}
                 </motion.div>
@@ -174,74 +155,100 @@ export default function ArticlePage({
     );
 }
 
-// ----------------- SSG -----------------
+/* ----------------- embed helper ----------------- */
+
+function toEmbed(url: string): { src: string; height: number } | null {
+    if (!url) return null;
+
+    if (url.includes("youtube.com/watch")) {
+        const u = new URL(url);
+        const v = u.searchParams.get("v");
+        if (!v) return null;
+        const qs = new URLSearchParams();
+        const list = u.searchParams.get("list");
+        if (list) qs.set("list", list);
+        qs.set("rel", "0");
+        qs.set("modestbranding", "1");
+        return {
+            src: `https://www.youtube.com/embed/${v}?${qs.toString()}`,
+            height: 360,
+        };
+    }
+
+    if (url.includes("youtu.be/")) {
+        const id = url.split("youtu.be/")[1]?.split(/[?&]/)[0];
+        if (id)
+            return {
+                src: `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1`,
+                height: 360,
+            };
+    }
+
+    if (url.includes("open.spotify.com/")) {
+        return {
+            src: url.replace("open.spotify.com/", "open.spotify.com/embed/"),
+            height: 180,
+        };
+    }
+
+    if (url.includes("soundcloud.com/")) {
+        const player =
+            "https://w.soundcloud.com/player/?url=" + encodeURIComponent(url);
+        return { src: player, height: 166 };
+    }
+
+    return { src: url, height: 360 };
+}
+
+/* ----------------- SSG ----------------- */
+
 export const getStaticPaths: GetStaticPaths = async () => {
-    const { getArticleSlugs } = await import("@/lib/cms");
-
-    // 1) content altındaki tüm .md dosyaları
-    const mdSlugs = getArticleSlugs(); // örn: "arin-kael/articles/zihnin-arka-plani"
-
-    // 2) data/articles.json içindeki sluglar (eğer commit ettiysen)
-    const dynSlugs = readDynamicArticles()
-        .map((a) => a.slug)
-        .filter(Boolean);
-
-    const allSlugs = Array.from(new Set([...mdSlugs, ...dynSlugs]));
+    const slugs = getArticleSlugs(); // content altındaki tüm .md dosyaları
 
     return {
-        paths: allSlugs.map((s) => ({
+        paths: slugs.map((s) => ({
             params: { slug: s.split("/") },
         })),
-        // Eğer `output: "export"` kullanmıyorsan burada "blocking" de olur.
-        // Daha garanti olsun diye prod’da 404 almak istemiyorsak blocking:
+        // Yeni md eklediğinde tekrar deploy gerektiriyor, ki sen zaten öyle yapıyorsun.
         fallback: "blocking",
     };
 };
 
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     const slugParts = ((params?.slug as string[]) || []).filter(Boolean);
-    const fullSlug = slugParts.join("/");
+    const rawJoined = slugParts.join("/");
     const last = slugParts[slugParts.length - 1] || "";
 
-    const { getArticle } = await import("@/lib/cms");
+    const candidates: string[] = [];
 
-    let a: any | null = null;
+    // 1) URL'in tamamı
+    if (rawJoined) candidates.push(rawJoined);
 
-    // 1) Markdown’dan dene (content klasörü)
-    try {
-        a = getArticle(fullSlug);
-    } catch {
-        a = null;
-    }
+    // 2) Sadece son parça
+    if (last && last !== rawJoined) candidates.push(last);
 
-    // 2) Olmazsa data/articles.json’dan dene
-    if (!a) {
-        const dyn = readDynamicArticles().find(
-            (x) =>
-                x.slug === fullSlug ||
-                x.slug === last ||
-                (typeof x.slug === "string" && x.slug.endsWith("/" + last))
-        );
+    // 3) articles/<slug>
+    if (last) candidates.push(`articles/${last}`);
 
-        if (dyn) {
-            return {
-                props: {
-                    title: dyn.title ?? null,
-                    html: dyn.body ?? null,
-                    embedUrl: dyn.embedUrl ?? null,
-                    audioUrl: dyn.audioUrl ?? null,
-                    issueNumber:
-                        typeof dyn.issueNumber !== "undefined"
-                            ? Number(dyn.issueNumber) || 1
-                            : null,
-                },
-                revalidate: 60,
-            };
+    // 4) <authorId>/articles/<slug>
+    if (last) {
+        for (const a of authors) {
+            candidates.push(`${a.id}/articles/${last}`);
         }
     }
 
-    // 3) Hâlâ yoksa boş props (component "bulunamadı" diyecek)
+    let a: any | null = null;
+    for (const c of candidates) {
+        try {
+            a = getArticle(c);
+            if (a) break;
+        } catch {
+            // sıradaki adayı dene
+        }
+    }
+
     if (!a) {
+        // md bulunamadı → component "Bu yazı bulunamadı" diyecek
         return {
             props: {
                 title: null,
@@ -254,7 +261,6 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
         };
     }
 
-    // Markdown bulunduysa normal şekilde dön
     return {
         props: {
             title: a.title ?? null,
