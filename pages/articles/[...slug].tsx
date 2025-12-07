@@ -1,23 +1,12 @@
 ﻿// /pages/articles/[...slug].tsx
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
 
-// Bu tip adminStore + JSON için ortak
-type ArticleLike = {
-    slug: string;
-    title: string;
-    body?: string;
-    html?: string;
-    embedUrl?: string | null;
-    audioUrl?: string | null;
-    issueNumber?: number | null;
-};
+/* ----------------- Ortak tipler ----------------- */
 
 type Props = {
     title: string | null;
@@ -27,13 +16,7 @@ type Props = {
     issueNumber?: number | null;
 };
 
-type RuntimeArticle = {
-    title: string;
-    body?: string;
-    embedUrl?: string | null;
-    audioUrl?: string | null;
-    issueNumber?: number | null;
-};
+/* ----------------- Sayfa bileşeni ----------------- */
 
 export default function ArticlePage({
                                         title,
@@ -42,65 +25,17 @@ export default function ArticlePage({
                                         audioUrl,
                                         issueNumber,
                                     }: Props) {
-    const router = useRouter();
-    const [rt, setRt] = useState<RuntimeArticle | null>(null);
-
-    // ---- İkinci şans: sadece localStorage’daki adminStore verisi ----
-    useEffect(() => {
-        // Build sırasında CMS’ten html geldiyse adminStore’a bakmaya gerek yok
-        if (html) return;
-
-        const slugParts = ((router.query.slug as string[]) || []).filter(Boolean);
-        if (!slugParts.length) return;
-
-        const fullSlug = slugParts.join("/");
-        const last = slugParts[slugParts.length - 1];
-
-        (async () => {
-            try {
-                const { getArticles } = await import("@/lib/adminStore");
-                const list = getArticles();
-
-                // 1) Tam slug
-                let found: any =
-                    list.find((a) => a.slug === fullSlug) ??
-                    // 2) Sadece son parçaya göre (iyilesmek vs.)
-                    list.find((a) => a.slug === last) ??
-                    list.find(
-                        (a) => typeof a.slug === "string" && a.slug.endsWith("/" + last)
-                    );
-
-                if (found) {
-                    setRt({
-                        title: found.title,
-                        body: found.body,
-                        embedUrl: found.embedUrl ?? null,
-                        audioUrl: found.audioUrl ?? null,
-                        issueNumber: Number(found.issueNumber) || 1,
-                    });
-                }
-            } catch {
-                // adminStore import hatası → sessiz geç
-            }
-        })();
-    }, [router.query.slug, html]);
-
-    const finalTitle = rt?.title ?? title ?? "Yazı";
-    const finalEmbed = rt?.embedUrl ?? embedUrl ?? null;
-    const finalAudio = rt?.audioUrl ?? audioUrl ?? null;
-
-    const finalIssueNo =
-        rt?.issueNumber ??
-        (typeof issueNumber === "number" ? issueNumber : null);
+    const finalTitle = title ?? "Yazı";
+    const embed = embedUrl ? toEmbed(embedUrl) : null;
+    const issueNo =
+        typeof issueNumber === "number" && !Number.isNaN(issueNumber)
+            ? issueNumber
+            : null;
 
     const issueHref =
-        finalIssueNo && finalIssueNo > 1
-            ? `/issues/${String(finalIssueNo).padStart(2, "0")}`
+        issueNo && issueNo > 1
+            ? `/issues/${String(issueNo).padStart(2, "0")}`
             : "/issue01";
-
-    const embed = finalEmbed ? toEmbed(finalEmbed) : null;
-
-    const showLoading = !html && !rt;
 
     return (
         <>
@@ -109,7 +44,7 @@ export default function ArticlePage({
             </Head>
 
             <ArticleLayout title={finalTitle}>
-                {(embed || finalAudio) && (
+                {(embed || audioUrl) && (
                     <motion.div
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -129,7 +64,7 @@ export default function ArticlePage({
                             ) : (
                                 <div className="p-4">
                                     <audio
-                                        src={finalAudio!}
+                                        src={audioUrl!}
                                         controls
                                         className="w-full rounded-lg bg-black/30"
                                     />
@@ -149,14 +84,6 @@ export default function ArticlePage({
                             className="prose prose-invert max-w-none"
                             dangerouslySetInnerHTML={{ __html: html }}
                         />
-                    ) : rt?.body ? (
-                        <div className="prose prose-invert max-w-none">
-                            <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                                {rt.body}
-                            </p>
-                        </div>
-                    ) : showLoading ? (
-                        <p className="text-white/60">Yükleniyor…</p>
                     ) : (
                         <p className="text-white/60">Bu yazı bulunamadı.</p>
                     )}
@@ -171,6 +98,7 @@ export default function ArticlePage({
 }
 
 /* ----------------- embed helper ----------------- */
+
 function toEmbed(url: string): { src: string; height: number } | null {
     if (!url) return null;
 
@@ -214,21 +142,29 @@ function toEmbed(url: string): { src: string; height: number } | null {
     return { src: url, height: 360 };
 }
 
-/* ------------ Dinamik JSON’dan okuma (server side) ------------ */
+/* ----------------- fs ile JSON okuma ----------------- */
 
 import fs from "fs";
 import path from "path";
 
-/** data/articles.json içindeki admin panel yazılarını oku */
+type ArticleLike = {
+    slug: string;
+    title: string;
+    body?: string;
+    html?: string;
+    embedUrl?: string | null;
+    audioUrl?: string | null;
+    issueNumber?: number | null;
+};
+
+/** data/articles.json içindeki (commit edilmiş) dinamik yazıları oku */
 function readDynamicArticles(): ArticleLike[] {
     try {
         const filePath = path.join(process.cwd(), "data", "articles.json");
         const raw = fs.readFileSync(filePath, "utf-8");
         const parsed = JSON.parse(raw);
-
         const items = Array.isArray(parsed?.items) ? parsed.items : parsed;
-        if (!Array.isArray(items)) return [];
-        return items as ArticleLike[];
+        return Array.isArray(items) ? (items as ArticleLike[]) : [];
     } catch {
         return [];
     }
@@ -238,14 +174,13 @@ function readDynamicArticles(): ArticleLike[] {
 
 export const getStaticPaths: GetStaticPaths = async () => {
     const { getArticleSlugs } = await import("@/lib/cms");
-    const slugs = getArticleSlugs(); // content altındaki tüm .md dosyaları
+    const slugs = getArticleSlugs();
 
     return {
         paths: slugs.map((s) => ({
             params: { slug: s.split("/") },
         })),
-        // Dinamik (admin panel) yazılar için fallback blocking:
-        // İlk istek geldiğinde getStaticProps çalışacak.
+        // Yeni yazılar için fallback: blocking → ilk istekte build edilir
         fallback: "blocking",
     };
 };
@@ -266,7 +201,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
         a = null;
     }
 
-    // 2) Olmazsa dinamik JSON’dan dene
+    // 2) Olmazsa data/articles.json’dan dene
     if (!a) {
         const dyn = readDynamicArticles().find(
             (x) =>
@@ -279,7 +214,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
             return {
                 props: {
                     title: dyn.title ?? null,
-                    html: dyn.body ?? null,
+                    html: dyn.html ?? dyn.body ?? null,
                     embedUrl: dyn.embedUrl ?? null,
                     audioUrl: dyn.audioUrl ?? null,
                     issueNumber:
@@ -292,32 +227,26 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
         }
     }
 
-    // 3) Hâlâ yoksa "boş" props → component tarafı "Bu yazı bulunamadı" der
-    if (!a) {
+    // 3) Markdown bulunduysa
+    if (a) {
         return {
             props: {
-                title: null,
-                html: null,
-                embedUrl: null,
-                audioUrl: null,
-                issueNumber: null,
+                title: a.title ?? null,
+                html: a.html ?? null,
+                embedUrl: a.embedUrl ?? null,
+                audioUrl: a.audioUrl ?? null,
+                issueNumber:
+                    typeof a.issueNumber !== "undefined"
+                        ? Number(a.issueNumber) || 1
+                        : null,
             },
             revalidate: 60,
         };
     }
 
-    // Markdown bulunduysa eskisi gibi devam
+    // 4) Hiçbir şey bulunamadı → 404
     return {
-        props: {
-            title: a.title ?? null,
-            html: a.html ?? null,
-            embedUrl: a.embedUrl ?? null,
-            audioUrl: a.audioUrl ?? null,
-            issueNumber:
-                typeof a.issueNumber !== "undefined"
-                    ? Number(a.issueNumber) || 1
-                    : null,
-        },
+        notFound: true,
         revalidate: 60,
     };
 };
