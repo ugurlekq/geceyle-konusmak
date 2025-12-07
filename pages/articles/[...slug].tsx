@@ -1,22 +1,29 @@
 ﻿// /pages/articles/[...slug].tsx
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { motion } from "framer-motion";
+import { marked } from "marked";
 
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
-import { getArticleSlugs, getArticle } from "@/lib/cms";
 
-// Sadece adminStore fallback'i için (local dev'te, isteğe bağlı)
-type RuntimeArticle = {
+/* ----------------------------------------------------
+ * Ortak tipler
+ * -------------------------------------------------- */
+
+type ArticleLike = {
+    slug: string;
     title: string;
     body?: string;
+    html?: string;
     embedUrl?: string | null;
     audioUrl?: string | null;
     issueNumber?: number | null;
+    authorId?: string | null;
+    date?: string | null;
 };
 
 type Props = {
@@ -25,20 +32,44 @@ type Props = {
     embedUrl?: string | null;
     audioUrl?: string | null;
     issueNumber?: number | null;
+    authorId?: string | null;
+    date?: string | null;
 };
 
-export default function ArticlePage(props: Props) {
-    const { title, html, embedUrl, audioUrl, issueNumber } = props;
+type RuntimeArticle = {
+    title: string;
+    body?: string;
+    embedUrl?: string | null;
+    audioUrl?: string | null;
+    issueNumber?: number | null;
+    authorId?: string | null;
+    date?: string | null;
+};
 
+/* ----------------------------------------------------
+ * Sayfa bileşeni
+ * -------------------------------------------------- */
+
+export default function ArticlePage({
+                                        title,
+                                        html,
+                                        embedUrl,
+                                        audioUrl,
+                                        issueNumber,
+                                        authorId,
+                                        date,
+                                    }: Props) {
     const router = useRouter();
     const [rt, setRt] = useState<RuntimeArticle | null>(null);
 
-    // İsteğe bağlı: sadece localStorage'daki adminStore'dan okuma (dev için)
+    // ---- Development için: localStorage/adminStore fallback'i ----
     useEffect(() => {
-        if (html) return; // zaten md'den gelmişse gerek yok
+        // Build sırasında CMS'ten html geldiyse adminStore'a bakmaya gerek yok
+        if (html) return;
 
         const slugParts = ((router.query.slug as string[]) || []).filter(Boolean);
         if (!slugParts.length) return;
+
         const fullSlug = slugParts.join("/");
         const last = slugParts[slugParts.length - 1];
 
@@ -46,12 +77,14 @@ export default function ArticlePage(props: Props) {
             try {
                 const { getArticles } = await import("@/lib/adminStore");
                 const list = getArticles();
-                const found =
-                    list.find((a: any) => a.slug === fullSlug) ||
-                    list.find((a: any) => a.slug === last) ||
+
+                let found: any =
+                    // 1) Tam slug
+                    list.find((a) => a.slug === fullSlug) ??
+                    // 2) Sadece son parçaya göre (iyilesmek vs.)
+                    list.find((a) => a.slug === last) ??
                     list.find(
-                        (a: any) =>
-                            typeof a.slug === "string" && a.slug.endsWith("/" + last)
+                        (a) => typeof a.slug === "string" && a.slug.endsWith("/" + last)
                     );
 
                 if (found) {
@@ -61,21 +94,29 @@ export default function ArticlePage(props: Props) {
                         embedUrl: found.embedUrl ?? null,
                         audioUrl: found.audioUrl ?? null,
                         issueNumber: Number(found.issueNumber) || 1,
+                        authorId: found.authorId ?? null,
+                        date: found.date ?? null,
                     });
                 }
             } catch {
-                // prod'da adminStore olmayabilir → sessiz geç
+                // adminStore import hatası → sessiz geç
             }
         })();
     }, [router.query.slug, html]);
 
+    // ---- Ortak final değerler (statik + dinamik) ----
     const finalTitle = rt?.title ?? title ?? "Yazı";
     const finalEmbed = rt?.embedUrl ?? embedUrl ?? null;
     const finalAudio = rt?.audioUrl ?? audioUrl ?? null;
 
     const finalIssueNo =
-        rt?.issueNumber ??
-        (typeof issueNumber === "number" ? issueNumber : null);
+        rt?.issueNumber ?? (typeof issueNumber === "number" ? issueNumber : null);
+
+    const finalAuthorId = rt?.authorId ?? authorId ?? null;
+    const finalDate = rt?.date ?? date ?? null;
+
+    const author =
+        finalAuthorId && authors.find((a) => a.id === finalAuthorId) || null;
 
     const issueHref =
         finalIssueNo && finalIssueNo > 1
@@ -83,7 +124,18 @@ export default function ArticlePage(props: Props) {
             : "/issue01";
 
     const embed = finalEmbed ? toEmbed(finalEmbed) : null;
+
     const showLoading = !html && !rt;
+
+    // Tarihi azıcık güzelleştirelim
+    const formattedDate =
+        finalDate && !Number.isNaN(Date.parse(finalDate))
+            ? new Date(finalDate).toLocaleDateString("tr-TR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            })
+            : null;
 
     return (
         <>
@@ -92,6 +144,26 @@ export default function ArticlePage(props: Props) {
             </Head>
 
             <ArticleLayout title={finalTitle}>
+                {/* Meta satırı: yazar + sayı + tarih */}
+                {(author || finalIssueNo || formattedDate) && (
+                    <div className="text-sm text-white/60 mb-6">
+                        {author && <span>{author.name}</span>}
+                        {finalIssueNo && (
+                            <span>
+                {author ? " • " : ""}
+                                Sayı {finalIssueNo}
+              </span>
+                        )}
+                        {formattedDate && (
+                            <span>
+                {author || finalIssueNo ? " • " : ""}
+                                {formattedDate}
+              </span>
+                        )}
+                    </div>
+                )}
+
+                {/* Embed / audio bloğu */}
                 {(embed || finalAudio) && (
                     <motion.div
                         initial={{ opacity: 0, y: 15 }}
@@ -122,6 +194,7 @@ export default function ArticlePage(props: Props) {
                     </motion.div>
                 )}
 
+                {/* İçerik */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -142,11 +215,12 @@ export default function ArticlePage(props: Props) {
                         <p className="text-white/60">Yükleniyor…</p>
                     ) : (
                         <p className="text-white/60">
-                            Bu yazı bulunamadı (production’da ilgili md dosyası yok).
+                            Bu yazı bulunamadı (production’da md dosyası / json’u yok).
                         </p>
                     )}
                 </motion.div>
 
+                {/* Sayfaya geri link */}
                 <div className="mt-10">
                     <BackLink href={issueHref} label="← Sayıya Dön" />
                 </div>
@@ -155,7 +229,9 @@ export default function ArticlePage(props: Props) {
     );
 }
 
-/* ----------------- embed helper ----------------- */
+/* ----------------------------------------------------
+ * Embed helper
+ * -------------------------------------------------- */
 
 function toEmbed(url: string): { src: string; height: number } | null {
     if (!url) return null;
@@ -200,55 +276,50 @@ function toEmbed(url: string): { src: string; height: number } | null {
     return { src: url, height: 360 };
 }
 
-/* ----------------- SSG ----------------- */
+/* ----------------------------------------------------
+ * Sunucu tarafı: JSON + MD okuma
+ * -------------------------------------------------- */
+
+/* ----------------------------------------------------
+ * SSG
+ * -------------------------------------------------- */
 
 export const getStaticPaths: GetStaticPaths = async () => {
+    const { getArticleSlugs } = await import("@/lib/cms");
     const slugs = getArticleSlugs(); // content altındaki tüm .md dosyaları
 
     return {
         paths: slugs.map((s) => ({
             params: { slug: s.split("/") },
         })),
-        // Yeni md eklediğinde tekrar deploy gerektiriyor, ki sen zaten öyle yapıyorsun.
+        // Admin panelden gelen yazılar için fallback blocking:
         fallback: "blocking",
     };
 };
 
+
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     const slugParts = ((params?.slug as string[]) || []).filter(Boolean);
-    const rawJoined = slugParts.join("/");
-    const last = slugParts[slugParts.length - 1] || "";
+    const fullSlug = slugParts.join("/");
 
-    const candidates: string[] = [];
+    const { getArticle } = await import("@/lib/cms");
 
-    // 1) URL'in tamamı
-    if (rawJoined) candidates.push(rawJoined);
+    try {
+        const a = getArticle(fullSlug);
 
-    // 2) Sadece son parça
-    if (last && last !== rawJoined) candidates.push(last);
-
-    // 3) articles/<slug>
-    if (last) candidates.push(`articles/${last}`);
-
-    // 4) <authorId>/articles/<slug>
-    if (last) {
-        for (const a of authors) {
-            candidates.push(`${a.id}/articles/${last}`);
-        }
-    }
-
-    let a: any | null = null;
-    for (const c of candidates) {
-        try {
-            a = getArticle(c);
-            if (a) break;
-        } catch {
-            // sıradaki adayı dene
-        }
-    }
-
-    if (!a) {
-        // md bulunamadı → component "Bu yazı bulunamadı" diyecek
+        return {
+            props: {
+                title: a.title ?? null,
+                html: a.html ?? null,
+                embedUrl: a.embedUrl ?? null,
+                audioUrl: a.audioUrl ?? null,
+                issueNumber: a.issueNumber ?? null,
+                authorId: a.authorId ?? null,
+                date: a.date ?? null,
+            },
+            revalidate: 60,
+        };
+    } catch {
         return {
             props: {
                 title: null,
@@ -256,22 +327,11 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
                 embedUrl: null,
                 audioUrl: null,
                 issueNumber: null,
+                authorId: null,
+                date: null,
             },
             revalidate: 60,
         };
     }
-
-    return {
-        props: {
-            title: a.title ?? null,
-            html: a.html ?? null,
-            embedUrl: a.embedUrl ?? null,
-            audioUrl: a.audioUrl ?? null,
-            issueNumber:
-                typeof a.issueNumber !== "undefined"
-                    ? Number(a.issueNumber) || 1
-                    : null,
-        },
-        revalidate: 60,
-    };
 };
+
