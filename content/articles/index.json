@@ -78,13 +78,24 @@
   },
   {
     "id": "02ddf5fb-dba6-4d0b-80ee-3fc89ba714eb",
-    "issueNumber": 2,
+    "issueNumber": 3,
     "title": "İyileşmenin Sessiz Ritmi",
     "slug": "iyilesmenin-sessiz-ritmi",
     "authorId": "noura-es",
     "date": "2025-12-07",
     "excerpt": "İyileşmek, büyük bir kırılmanın değil, bedenin ritmine yeniden bağlanmanın sessiz hâlidir. Acı yok olmaz; ağırlığı yer değiştirir. Merakın geri gelmesi, nefesin yumuşaması ve insanın kendine karşı incelmesi — iyileşmenin görünmez adımlarıdır. İyileşme, insanın kendi içinden geçerken kendine yeniden yaklaşmasıdır.",
     "embedUrl": "https://www.youtube.com/watch?v=VonLmrT1rLk",
+    "audioUrl": ""
+  },
+  {
+    "id": "f27103b3-17a9-44a5-929d-0bcd406a7072",
+    "issueNumber": 3,
+    "title": "Zihnin Kendi Kendini Onarışı",
+    "slug": "zihnin-kendi-kendini-onarisi",
+    "authorId": "arin-kael",
+    "date": "2025-12-08",
+    "excerpt": "İyileşme, insanın bilinçli bir çabayla yarattığı bir süreç değil; zihnin kendi iç düzenini sessizce yeniden kurduğu doğal bir akıştır. Dış dünya sustuğunda, düşünceler aralandığında veya sıradan bir an içe doğru açıldığında, bilinç dağılmış parçaları toplar, duyguların ağırlığını hafifletir ve insanı kendisine biraz daha uygun bir hâle getirir. Bu süreç görünmezdir; ne hızlandırılabilir ne de denetlenebilir. İyileşme, çoğu zaman hiçbir şey yapmadığımızı sandığımız o küçük aralıklarda gerçekleşir. İnsan fark etmeyi bıraktığında, zihin kendi ritmini bulur — ve iyileşme tam da burada başlar.",
+    "embedUrl": "https://www.youtube.com/watch?v=qxAti28wqcM",
     "audioUrl": ""
   }
 ]

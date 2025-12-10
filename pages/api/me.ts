@@ -1,19 +1,25 @@
 ﻿// pages/api/me.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth/[...nextauth]";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-    const raw = req.headers.cookie || '';
-    const match = raw.split(';').map(s => s.trim()).find(s => s.startsWith('session='));
-    if (!match) {
-        res.status(200).json({});
-        return;
+export default async function handler(
+    req: NextApiRequest,
+    res: NextApiResponse
+) {
+    // NextAuth üzerinden oturumu oku
+    const session = await getServerSession(req, res, authOptions);
+
+    if (!session || !session.user?.email) {
+        return res.status(200).json({});
     }
-    try {
-        const val = decodeURIComponent(match.split('=')[1] || '');
-        const json = JSON.parse(Buffer.from(val, 'base64').toString('utf8'));
-        // güvenlik: sadece email ve role dönüyoruz
-        res.status(200).json({ email: json.email, role: json.role });
-    } catch {
-        res.status(200).json({});
-    }
+
+    const u = session.user as any;
+
+    return res.status(200).json({
+        email: u.email,
+        name: u.name ?? null,
+        role: u.role ?? "user",
+        isSubscribed: !!u.isSubscribed,
+    });
 }

@@ -167,51 +167,54 @@ export default function Home() {
                     <Hero />
 
                     {/* MOTTOLAR */}
-                    <section className="text-center px-6 mt-10">
-                        {/* Üst açıklama bölümü */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 1.0 }}
-                            viewport={{ once: true }}
-                        >
-                            <p className="candle-flicker max-w-3xl mx-auto text-lg md:text-xl text-gray-300/95 leading-relaxed">
-                                Geceyle Konuşmak; düşüncenin acele etmediği,
-                                kelimelerin kendi ritmine döndüğü bir alan.
-                                <br className="hidden md:block" />
-                                Bu dergide yazı bir açıklama değil — bir eşliktir.
-                                <br className="hidden md:block" />
-                                Kimi cümleler sessizlikte duyulur; kimi sorular insana
-                                dışarıdan değil, içeriden yol açar.
-                            </p>
-
-                            <div className="mx-auto mt-8 h-px w-24 bg-amber-400/40 shadow-[0_0_18px_rgba(251,191,36,.35)]" />
-                        </motion.div>
-
-                        {/* Alıntı bölümü */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2, duration: 0.9 }}
-                        >
-                            <blockquote className="max-w-3xl mx-auto mt-8">
-                                <p className="candle-flicker text-amber-300 text-xl md:text-2xl italic leading-relaxed">
-                                    “Bazı geceler vardır; düşünceler insanı değil,
-                                    insan düşünceleri taşır.”
+                    <section className="px-6 mt-10">
+                        <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-black/45 
+                    shadow-[0_0_60px_rgba(0,0,0,.75)] px-6 py-8 md:px-8 md:py-10 text-center">
+                            {/* Üst açıklama bölümü */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 1.0 }}
+                                viewport={{ once: true }}
+                            >
+                                <p className="candle-flicker text-lg md:text-xl text-gray-300/95 leading-relaxed">
+                                    Geceyle Konuşmak; düşüncenin acele etmediği,
+                                    kelimelerin kendi ritmine döndüğü bir alan.
+                                    <br className="hidden md:block" />
+                                    Bu dergide yazı bir açıklama değil — bir eşliktir.
+                                    <br className="hidden md:block" />
+                                    Kimi cümleler sessizlikte duyulur; kimi sorular insana
+                                    dışarıdan değil, içeriden yol açar.
                                 </p>
-                                <p className="mt-3 text-white/60 text-base md:text-lg">
-                                    Ve o gecelerde, bir cümle bütün günün ağırlığını
-                                    tek başına taşır.
-                                </p>
-                            </blockquote>
-                        </motion.div>
+
+                                <div className="mx-auto mt-8 h-px w-24 bg-amber-400/40 shadow-[0_0_18px_rgba(251,191,36,.35)]" />
+                            </motion.div>
+
+                            {/* Alıntı bölümü */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2, duration: 0.9 }}
+                            >
+                                <blockquote className="mt-8">
+                                    <p className="candle-flicker text-amber-300 text-xl md:text-2xl italic leading-relaxed">
+                                        “Bazı geceler vardır; düşünceler insanı değil,
+                                        insan düşünceleri taşır.”
+                                    </p>
+                                    <p className="mt-3 text-white/60 text-base md:text-lg">
+                                        Ve o gecelerde, bir cümle bütün günün ağırlığını
+                                        tek başına taşır.
+                                    </p>
+                                </blockquote>
+                            </motion.div>
+                        </div>
                     </section>
-
 
                     {/* Dinamik Yazılar (istersen tekrar açarız) */}
                     {/* <DynamicArticles items={dynArticles} /> */}
 
                     {/* Diğer bölümler */}
+                    
                     <MembershipPitch />
                     <AboutMag />
                     <AuthorsGrid />
