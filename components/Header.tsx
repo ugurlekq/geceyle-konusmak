@@ -229,7 +229,7 @@ export default function Header() {
                             isActive('/subscribe') ? 'bg-white/10' : ''
                         }`}
                     >
-                        Abone Ol
+                        Giriş Yap
                     </Link>
 
                     {user ? (
