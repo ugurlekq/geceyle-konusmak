@@ -217,13 +217,24 @@ export default function AdminPage() {
                     >
                         ← Anasayfaya Dön
                     </Link>
-                    <button
-                        onClick={logout}
-                        className="rounded-xl px-3.5 py-2 border border-white/14 text-white/75 bg-black/30 backdrop-blur-sm hover:bg-white/10 hover:text-white transition shadow-sm"
-                    >
-                        Çıkış
-                    </button>
+
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/moderation"
+                            className="rounded-xl px-3.5 py-2 border border-amber-400/30 text-amber-200 bg-black/30 backdrop-blur-sm hover:bg-amber-400/15 hover:text-amber-100 transition shadow-sm"
+                        >
+                            Like / Yorum İşlemleri
+                        </Link>
+
+                        <button
+                            onClick={logout}
+                            className="rounded-xl px-3.5 py-2 border border-white/14 text-white/75 bg-black/30 backdrop-blur-sm hover:bg-white/10 hover:text-white transition shadow-sm"
+                        >
+                            Çıkış
+                        </button>
+                    </div>
                 </div>
+
 
                 <h1 className="text-2xl text-amber-300 mb-6">
                     Geceyle Konuşmak — Admin Paneli
