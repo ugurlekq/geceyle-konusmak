@@ -345,7 +345,7 @@ export default function ArticlePage({
                      setCommentText(e.target.value);
                  }}
                  onInput={autoGrowTextarea}
-                 className="w-full bg-transparent outline-none text-white/90 resize-none"
+                 className="w-full bg-transparent outline-none text-white/90 resize-none whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
                  style={{ overflow: "hidden" }}
              />
 
@@ -367,7 +367,9 @@ export default function ArticlePage({
                             ) : (
                                 comments.map((c) => (
                                     <div key={c.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
-                                        <div className="text-white/90 whitespace-pre-wrap">{c.content}</div>
+                                        <div className="text-white/90 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                            {c.content}
+                                        </div>
                                         <div className="text-white/40 text-xs mt-2">
                                             {new Date(c.created_at).toLocaleString("tr-TR")}
                                         </div>

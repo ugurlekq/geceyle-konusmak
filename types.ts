@@ -25,5 +25,8 @@ export type Article = {
 // types.ts
 export type UserSession = {
     email: string;
-    role: 'user' | 'admin';
+    name?: string | null;
+    role?: string;
+    isSubscribed?: boolean;
 };
+
