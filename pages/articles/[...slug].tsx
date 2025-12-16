@@ -166,7 +166,8 @@ export default function ArticlePage({
 
             if (r.ok && j?.ok && j?.inserted) {
                 // ✅ YouTube hissi: yeni yorum ALTTA belirsin, input yerinden oynamasın
-                setComments((prev) => [...prev, j.inserted as CommentRow]);
+                setComments((prev) => [...prev, j.item]);
+
                 setCommentText("");
                 requestAnimationFrame(() => {
                     autoGrowTextarea();

@@ -39,17 +39,26 @@ export default function AdminModerationPage() {
         })();
     }, []);
 
+    async function safeJson(url: string, fallback: any) {
+        try {
+            const r = await fetch(url, { cache: "no-store", credentials: "include" });
+            if (!r.ok) return fallback; // 404/401 vs -> fallback
+            return await r.json();
+        } catch {
+            return fallback;
+        }
+    }
+
     async function refresh() {
-        const [c, l, v] = await Promise.all([
-            fetch('/api/admin/comments?limit=100', { cache: 'no-store' }).then(r => r.json()),
-            fetch('/api/admin/likes?top=3', { cache: 'no-store' }).then(r => r.json()),
-            fetch('/api/admin/visitors', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
-        ]);
+        const c = await safeJson("/api/admin/comments?limit=100", { items: [] });
+        const l = await safeJson("/api/admin/likes?top=3", { items: [] });
+        const v = await safeJson("/api/admin/visitors", { total: null });
 
         setComments(Array.isArray(c?.items) ? c.items : []);
         setTopLikes(Array.isArray(l?.items) ? l.items : []);
-        setVisitors(typeof v?.total === 'number' ? v.total : null);
+        setVisitors(typeof v?.total === "number" ? v.total : null);
     }
+
 
     useEffect(() => {
         if (me?.role === 'admin') refresh();
