@@ -35,6 +35,11 @@ export default function Header() {
         }
     }
 
+    useEffect(() => {
+        fetch('/api/visit', { method: 'POST', credentials: 'include' }).catch(() => {});
+    }, []);
+
+
     /* ------------------ Kullanıcı oturumunu oku ------------------ */
     useEffect(() => {
         loadMe();

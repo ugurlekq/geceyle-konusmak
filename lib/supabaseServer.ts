@@ -2,11 +2,11 @@
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const secret = process.env.SUPABASE_SECRET_KEY!;
 
-// Bu client SADECE server'da kullanılacak (API route, server actions vs.)
-export const supabaseServer = createClient(url, serviceRoleKey, {
-    auth: {
-        persistSession: false,
-    },
+if (!url) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+if (!secret) throw new Error("Missing SUPABASE_SECRET_KEY");
+
+export const supabaseServer = createClient(url, secret, {
+    auth: { persistSession: false, autoRefreshToken: false },
 });

@@ -124,10 +124,14 @@ export default function ArticlePage({
 
     useEffect(() => {
         if (!pageSlug) return;
-        refreshMeta();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetch("/api/visit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ visitorId: getVisitorId() }),
+        }).catch(() => {});
     }, [pageSlug]);
-    
+
+
     useEffect(() => {
         autoGrowTextarea();
     }, [commentText]);

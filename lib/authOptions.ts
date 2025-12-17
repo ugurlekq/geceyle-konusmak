@@ -1,4 +1,5 @@
-﻿import NextAuth, { type NextAuthOptions } from "next-auth";
+﻿// lib/authOptions.ts
+import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@geceylekonusmak.org";
@@ -16,17 +17,15 @@ export const authOptions: NextAuthOptions = {
             if (account && profile) {
                 const email = (profile as any).email as string | undefined;
                 token.role =
-                    email && ADMIN_EMAIL && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+                    email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
                         ? "admin"
                         : "user";
             }
             return token;
         },
         async session({ session, token }) {
-            if (session.user) (session.user as any).role = (token as any).role ?? "user";
+            if (session.user) (session.user as any).role = token.role ?? "user";
             return session;
         },
     },
 };
-
-export default NextAuth(authOptions);
