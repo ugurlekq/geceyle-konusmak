@@ -2,15 +2,22 @@
   {
     "number": 2,
     "title": "Sessiz Aklın Çağı",
-    "date": "2025-11-20",
+    "date": null,
     "description": "İnsanın en derin dönüşümleri artık gürültüde değil, sessizlikte şekilleniyor. Zihin durdukça, içimizde uzun süredir cevap bekleyen sorular görünür hale geliyor. Ve belki de bu çağın gerçek devrimi, insanın yeniden kendiyle konuşabilme cesaretinde saklı.",
     "cover_url": ""
   },
   {
     "number": 3,
     "title": "İyileşmek",
-    "date": "2025-11-26",
+    "date": null,
     "description": "“Bugünün insanı acıyı yanlış yerde arıyor. Artık acı, bir yaranın kanaması değil; kendi iç rotasını kaybetmiş bir ruhun sessiz çırpınışıdır. İyileşmek ise bu rotayı yeniden bulma cesaretidir. Çünkü iyileşmek, acının geçmesinden çok, yönünü iyiye çevirmektir.”",
+    "cover_url": ""
+  },
+  {
+    "number": 4,
+    "title": "Ritmi Geri Almak",
+    "date": "2025-12-20",
+    "description": "Ritmi Geri Almak, insanın hızla değil, sürekli tetikte yaşamaya zorlandığı bu çağda kendi iç temposunu yeniden hatırlama çağrısıdır. Düşük frekanslar bireysel bir zayıflık değil, toplumsal bir düzenlemenin sonucudur; bu sayı, ritmi geri almanın kaçış değil, bilinçli bir yeniden bağlanma olduğunu anlatır. Çünkü insan kendi ritmini bulduğunda yalnızca iyileşmez, bulunduğu alanı da dönüştürür.",
     "cover_url": ""
   }
 ]
