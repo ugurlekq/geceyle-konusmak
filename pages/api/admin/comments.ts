@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
 
 function isAdminEmail(email?: string | null) {
     if (!email) return false;
@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             const limit = Math.min(Number(req.query.limit ?? 100) || 100, 300);
 
-            const { data, error } = await supabaseServer
+            const { data, error } = await supabaseAdmin()
                 .from("article_comments")
                 .select("id, slug, content, created_at, is_hidden, visitor_id")
                 .order("created_at", { ascending: false })
@@ -59,7 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 return res.status(400).json({ ok: false, error: "Missing is_hidden(boolean)" });
             }
 
-            const { data, error } = await supabaseServer
+            const { data, error } = await supabaseAdmin()
                 .from("article_comments")
                 .update({ is_hidden })
                 .eq("id", id)
@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const id = readId(req);
             if (!id) return res.status(400).json({ ok: false, error: "Missing id" });
 
-            const { data, error } = await supabaseServer
+            const { data, error } = await supabaseAdmin()
                 .from("article_comments")
                 .delete()
                 .eq("id", id)
