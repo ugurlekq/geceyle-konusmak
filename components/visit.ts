@@ -1,6 +1,7 @@
 ﻿// pages/api/visit.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "POST") {
@@ -12,14 +13,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!visitorId) return res.status(400).json({ ok: false, error: "Missing visitorId" });
 
     // upsert + view increment
-    const { data: existing } = await supabaseServer
+    const { data: existing } = await supabaseAdmin()
         .from("site_visitors")
         .select("visitor_id, views")
         .eq("visitor_id", visitorId)
         .maybeSingle();
 
     if (!existing) {
-        const { error } = await supabaseServer
+        const { error } = await supabaseAdmin()
             .from("site_visitors")
             .insert({ visitor_id: visitorId, views: 1 });
 
@@ -27,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json({ ok: true, isNew: true });
     }
 
-    const { error } = await supabaseServer
+    const { error } = await supabaseAdmin()
         .from("site_visitors")
         .update({ last_seen: new Date().toISOString(), views: (existing.views || 0) + 1 })
         .eq("visitor_id", visitorId);
