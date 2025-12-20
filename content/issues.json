@@ -1,18 +1,16 @@
 [
   {
-    "id": "392b94d0-b115-4c51-abf0-3dce8b095c4b",
     "number": 2,
     "title": "Sessiz Aklın Çağı",
     "date": "2025-11-20",
     "description": "İnsanın en derin dönüşümleri artık gürültüde değil, sessizlikte şekilleniyor. Zihin durdukça, içimizde uzun süredir cevap bekleyen sorular görünür hale geliyor. Ve belki de bu çağın gerçek devrimi, insanın yeniden kendiyle konuşabilme cesaretinde saklı.",
-    "coverUrl": ""
+    "cover_url": ""
   },
   {
-    "id": "3869a32a-0307-427d-b82d-79dd42762314",
     "number": 3,
     "title": "İyileşmek",
     "date": "2025-11-26",
     "description": "“Bugünün insanı acıyı yanlış yerde arıyor. Artık acı, bir yaranın kanaması değil; kendi iç rotasını kaybetmiş bir ruhun sessiz çırpınışıdır. İyileşmek ise bu rotayı yeniden bulma cesaretidir. Çünkü iyileşmek, acının geçmesinden çok, yönünü iyiye çevirmektir.”",
-    "coverUrl": ""
+    "cover_url": ""
   }
 ]

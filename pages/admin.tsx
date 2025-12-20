@@ -118,7 +118,11 @@ async function removeIssueFromDisk(number: number) {
 /** Diskten güncel sayı listesini oku, yoksa local store’a düş. */
 async function loadIssuesFromDiskOrLocal(setIssuesFn: (x: Issue[]) => void) {
     try {
-        const r = await fetch('/api/content/issues', { cache: 'no-store' });
+        const r = await fetch('/api/content/issues', {
+            cache: 'no-store',
+            credentials: 'include',
+        });
+
         const d = await r.json().catch(() => ({} as any));
         const items: Issue[] = Array.isArray(d.items) ? d.items : [];
         if (items.length > 0) {
@@ -305,20 +309,17 @@ export default function AdminPage() {
                                     .sort((a, b) => b.number - a.number)
                                     .map((i) => (
                                         <li
-                                            key={i.id}
+                                            key={i.number}
                                             className="flex items-center justify-between rounded-lg border border-white/10 p-3 gap-3"
                                         >
                                             <div>
                                                 <div className="text-amber-300">
                                                     Sayı {i.number} — {i.title}
                                                 </div>
-                                                <div className="text-xs text-white/60">
-                                                    {i.date}
-                                                </div>
+                                                <div className="text-xs text-white/60">{i.date}</div>
                                             </div>
 
                                             <div className="flex items-center gap-3">
-                                                {/* Düzenle */}
                                                 <button
                                                     className="text-xs text-amber-200 hover:text-amber-100"
                                                     onClick={() => setEditingIssue(i)}
@@ -326,15 +327,8 @@ export default function AdminPage() {
                                                     Düzenle
                                                 </button>
 
-                                                {/* Sayfa açma butonu */}
                                                 <Link
-                                                    href={
-                                                        i.number === 1
-                                                            ? '/issue01'
-                                                            : `/issues/${String(
-                                                                i.number
-                                                            ).padStart(2, '0')}`
-                                                    }
+                                                    href={i.number === 1 ? "/issue01" : `/issues/${String(i.number).padStart(2, "0")}`}
                                                     className="text-amber-300 hover:text-amber-200 text-sm"
                                                     target="_blank"
                                                 >
@@ -347,25 +341,14 @@ export default function AdminPage() {
                                                         try {
                                                             setBusy(true);
 
-                                                            // local store’dan da sil
-                                                            deleteIssue(i.id);
+                                                            // ✅ localstore’u da number ile temizle (adminStore’u buna göre ayarlayacağız)
+                                                            // deleteIssue(i.number);
 
-                                                            // diskte sil
-                                                            await removeIssueFromDisk(
-                                                                Number(i.number)
-                                                            );
+                                                            await removeIssueFromDisk(i.number);
 
-                                                            // 🔹 tekrar diskteki güncel listeyi oku
-                                                            await loadIssuesFromDiskOrLocal(
-                                                                setIssues
-                                                            );
+                                                            await loadIssuesFromDiskOrLocal(setIssues);
 
-                                                            if (
-                                                                editingIssue &&
-                                                                editingIssue.id === i.id
-                                                            ) {
-                                                                setEditingIssue(null);
-                                                            }
+                                                            if (editingIssue?.number === i.number) setEditingIssue(null);
                                                         } finally {
                                                             setBusy(false);
                                                         }
@@ -377,6 +360,7 @@ export default function AdminPage() {
                                             </div>
                                         </li>
                                     ))}
+
                             </ul>
                         )}
                     </Card>
@@ -418,6 +402,8 @@ export default function AdminPage() {
                                                 <button
                                                     disabled={busy}
                                                     onClick={async () => {
+                                                        if (!confirm(`"${a.title}" yazısı silinsin mi?`)) return;
+
                                                         try {
                                                             setBusy(true);
                                                             deleteArticle(a.id); // UI
