@@ -1,7 +1,6 @@
 ﻿// pages/api/comments.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { supabaseServer } from "@/lib/supabaseServer";
-
+import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
 function asText(v: unknown) {
     return typeof v === "string" ? v : "";
 }
@@ -15,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             if (!slug) return res.status(400).json({ ok: false, error: "slug gerekli" });
 
-            const { data, error } = await supabaseServer
+            const { data, error } = await supabaseAdmin()
                 .from("article_comments")
                 .select("id, slug, content, created_at, is_hidden, visitor_id")
                 .eq("slug", slug)
@@ -40,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             // visitor_id: sende şu an localStorage var; cookie yoksa null bırak.
             const visitorId = (req.cookies?.visitor_id || null) as string | null;
 
-            const { data, error } = await supabaseServer
+            const { data, error } = await supabaseAdmin()
                 .from("article_comments")
                 .insert([{ slug, content, is_hidden: false, visitor_id: visitorId }])
                 .select("id, slug, content, created_at, is_hidden, visitor_id")
