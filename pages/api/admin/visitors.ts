@@ -2,7 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
+
 
 function isAdminEmail(email?: string | null) {
     if (!email) return false;
@@ -30,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(405).json({ ok: false, error: "Method not allowed" });
     }
 
-    const { count, error } = await supabaseServer
+    const { count, error } = await supabaseAdmin()
         .from("site_visitors")
         .select("visitor_id", { count: "exact", head: true });
 

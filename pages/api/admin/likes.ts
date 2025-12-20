@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/lib/server/supabaseAdmin";
 
 function isAdminEmail(email?: string | null) {
     if (!email) return false;
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const top = Math.min(Number(req.query.top ?? 3) || 3, 20);
 
-    const { data, error } = await supabaseServer
+    const { data, error } = await supabaseAdmin()
         .from("article_likes")
         .select("slug")
         .order("created_at", { ascending: false }); // sadece veri çekmek için; aşağıda aggregate edeceğiz
