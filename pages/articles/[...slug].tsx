@@ -14,18 +14,6 @@ import { authors } from "@/data/authors";
  * Ortak tipler
  * -------------------------------------------------- */
 
-type ArticleLike = {
-    slug: string;
-    title: string;
-    body?: string;
-    html?: string;
-    embedUrl?: string | null;
-    audioUrl?: string | null;
-    issueNumber?: number | null;
-    authorId?: string | null;
-    date?: string | null;
-};
-
 type Props = {
     title: string | null;
     html: string | null;
@@ -72,7 +60,9 @@ export default function ArticlePage({
 
     // ✅ Sayfanın gerçek slug'ı (full path)
     const slugParts = ((router.query.slug as string[]) || []).filter(Boolean);
-    const pageSlug = useMemo(() => slugParts.join("/"), [slugParts.join("/")]); // stable-ish
+
+    // ✅ Stabil slug
+    const pageSlug = useMemo(() => slugParts.join("/"), [router.query.slug]);
 
     // ✅ Meta state (tek kaynaktan)
     const [likeCount, setLikeCount] = useState<number>(0);
@@ -90,7 +80,7 @@ export default function ArticlePage({
     function autoGrowTextarea() {
         const el = taRef.current;
         if (!el) return;
-        el.style.height = "0px";                       // kritik
+        el.style.height = "0px"; // kritik
         el.style.height = Math.min(el.scrollHeight, 220) + "px";
     }
 
@@ -99,18 +89,22 @@ export default function ArticlePage({
         const k = "gk_vid";
         let v = localStorage.getItem(k);
         if (!v) {
-            v = (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) + "-" + Date.now();
+            v =
+                (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) +
+                "-" +
+                Date.now();
             localStorage.setItem(k, v);
         }
         return v;
     }
 
-
     async function refreshMeta() {
         if (!pageSlug) return;
         setLoadingMeta(true);
         try {
-            const r = await fetch(`/api/article-meta?slug=${encodeURIComponent(pageSlug)}`);
+            const r = await fetch(
+                `/api/article-meta?slug=${encodeURIComponent(pageSlug)}`
+            );
             const j = await r.json().catch(() => null);
 
             if (r.ok && j?.ok) {
@@ -131,7 +125,6 @@ export default function ArticlePage({
         }).catch(() => {});
     }, [pageSlug]);
 
-
     useEffect(() => {
         autoGrowTextarea();
     }, [commentText]);
@@ -146,7 +139,6 @@ export default function ArticlePage({
                 body: JSON.stringify({ slug: pageSlug, visitorId: getVisitorId() }),
             });
             if (r.ok) {
-                // sayaç göstermek istemesen bile backend doğru çalışsın diye meta’yı yeniliyoruz
                 await refreshMeta();
             }
         } finally {
@@ -169,7 +161,7 @@ export default function ArticlePage({
             const j = await r.json().catch(() => null);
 
             if (r.ok && j?.ok && j?.inserted) {
-                // ✅ YouTube hissi: yeni yorum ALTTA belirsin, input yerinden oynamasın
+                // ✅ yeni yorum ALTTA
                 setComments((prev) => [...prev, j.item]);
 
                 setCommentText("");
@@ -178,7 +170,6 @@ export default function ArticlePage({
                     taRef.current?.focus();
                 });
             } else if (r.ok && j?.ok) {
-                // inserted dönmediyse güvenli fallback
                 setCommentText("");
                 await refreshMeta();
             }
@@ -203,12 +194,12 @@ export default function ArticlePage({
                 const { getArticles } = await import("@/lib/adminStore");
                 const list = getArticles();
 
-                let found: any =
-                    // 1) Tam slug
+                const found: any =
                     list.find((a) => a.slug === fullSlug) ??
-                    // 2) Sadece son parçaya göre (iyilesmek vs.)
                     list.find((a) => a.slug === last) ??
-                    list.find((a) => typeof a.slug === "string" && a.slug.endsWith("/" + last));
+                    list.find(
+                        (a) => typeof a.slug === "string" && a.slug.endsWith("/" + last)
+                    );
 
                 if (found) {
                     setRt({
@@ -222,7 +213,7 @@ export default function ArticlePage({
                     });
                 }
             } catch {
-                // adminStore import hatası → sessiz geç
+                // sessiz geç
             }
         })();
     }, [router.query.slug, html]);
@@ -232,21 +223,24 @@ export default function ArticlePage({
     const finalEmbed = rt?.embedUrl ?? embedUrl ?? null;
     const finalAudio = rt?.audioUrl ?? audioUrl ?? null;
 
-    const finalIssueNo = rt?.issueNumber ?? (typeof issueNumber === "number" ? issueNumber : null);
+    const finalIssueNo =
+        rt?.issueNumber ?? (typeof issueNumber === "number" ? issueNumber : null);
 
     const finalAuthorId = rt?.authorId ?? authorId ?? null;
     const finalDate = rt?.date ?? date ?? null;
 
-    const author = (finalAuthorId && authors.find((a) => a.id === finalAuthorId)) || null;
+    const author =
+        (finalAuthorId && authors.find((a) => a.id === finalAuthorId)) || null;
 
     const issueHref =
-        finalIssueNo && finalIssueNo > 1 ? `/issues/${String(finalIssueNo).padStart(2, "0")}` : "/issue01";
+        finalIssueNo && finalIssueNo > 1
+            ? `/issues/${String(finalIssueNo).padStart(2, "0")}`
+            : "/issue01";
 
     const embed = finalEmbed ? toEmbed(finalEmbed) : null;
 
     const showLoading = !html && !rt;
 
-    // Tarihi azıcık güzelleştirelim
     const formattedDate =
         finalDate && !Number.isNaN(Date.parse(finalDate))
             ? new Date(finalDate).toLocaleDateString("tr-TR", {
@@ -284,7 +278,11 @@ export default function ArticlePage({
 
                 {/* Embed / audio bloğu */}
                 {(embed || finalAudio) && (
-                    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.2 }}>
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1.2 }}
+                    >
                         <div className="mb-10 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
                             {embed ? (
                                 <iframe
@@ -298,7 +296,11 @@ export default function ArticlePage({
                                 />
                             ) : (
                                 <div className="p-4">
-                                    <audio src={finalAudio!} controls className="w-full rounded-lg bg-black/30" />
+                                    <audio
+                                        src={finalAudio!}
+                                        controls
+                                        className="w-full rounded-lg bg-black/30"
+                                    />
                                 </div>
                             )}
                         </div>
@@ -306,21 +308,30 @@ export default function ArticlePage({
                 )}
 
                 {/* İçerik */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 1.2 }}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 1.2 }}
+                >
                     {html ? (
-                        <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
+                        <div
+                            className="prose prose-invert max-w-none"
+                            dangerouslySetInnerHTML={{ __html: html }}
+                        />
                     ) : rt?.body ? (
                         <div className="prose prose-invert max-w-none">
-                            <p className="text-white/90 leading-relaxed whitespace-pre-wrap">{rt.body}</p>
+                            <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                                {rt.body}
+                            </p>
                         </div>
                     ) : showLoading ? (
                         <p className="text-white/60">Yükleniyor…</p>
                     ) : (
-                        <p className="text-white/60">Bu yazı bulunamadı (production’da md dosyası / json’u yok).</p>
+                        <p className="text-white/60">Bu yazı bulunamadı.</p>
                     )}
                 </motion.div>
 
-                {/* ✅ Like + Comments (composer ÜSTTE, liste ALTTA) */}
+                {/* ✅ Like + Comments */}
                 <div className="mt-10 border-t border-white/10 pt-8">
                     <div className="flex items-center gap-4">
                         <button
@@ -331,28 +342,24 @@ export default function ArticlePage({
                             {liking ? "Beğeniliyor…" : "❤️ Beğen"}
                         </button>
 
-                        {/* İstersen bunu kaldırırız; kalsın diye sen eklemiştin */}
                         <div className="text-white/70 text-sm">{likeCount} beğeni</div>
-
                         {loadingMeta && <div className="text-white/40 text-xs">senkron…</div>}
                     </div>
 
                     <div className="mt-8">
                         <div className="text-white/80 font-semibold mb-3">Yorumlar</div>
 
-                        {/* ✅ Composer önce (YouTube hissi) */}
+                        {/* Composer */}
                         <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-6">
-             <textarea
-                 ref={taRef}
-                 rows={1}
-                 value={commentText}
-                 onChange={(e) => {
-                     setCommentText(e.target.value);
-                 }}
-                 onInput={autoGrowTextarea}
-                 className="w-full bg-transparent outline-none text-white/90 resize-none whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
-                 style={{ overflow: "hidden" }}
-             />
+              <textarea
+                  ref={taRef}
+                  rows={1}
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onInput={autoGrowTextarea}
+                  className="w-full bg-transparent outline-none text-white/90 resize-none whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+                  style={{ overflow: "hidden" }}
+              />
 
                             <div className="mt-3 flex justify-end">
                                 <button
@@ -365,13 +372,16 @@ export default function ArticlePage({
                             </div>
                         </div>
 
-                        {/* ✅ Liste sonra (yeni yorum en ALTA eklenir) */}
+                        {/* Liste */}
                         <div className="space-y-3">
                             {comments.length === 0 ? (
                                 <div className="text-white/50 text-sm">Henüz yorum yok.</div>
                             ) : (
                                 comments.map((c) => (
-                                    <div key={c.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                                    <div
+                                        key={c.id}
+                                        className="rounded-xl border border-white/10 bg-white/5 p-4"
+                                    >
                                         <div className="text-white/90 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                                             {c.content}
                                         </div>
@@ -433,7 +443,8 @@ function toEmbed(url: string): { src: string; height: number } | null {
     }
 
     if (url.includes("soundcloud.com/")) {
-        const player = "https://w.soundcloud.com/player/?url=" + encodeURIComponent(url);
+        const player =
+            "https://w.soundcloud.com/player/?url=" + encodeURIComponent(url);
         return { src: player, height: 166 };
     }
 
@@ -452,7 +463,6 @@ export const getStaticPaths: GetStaticPaths = async () => {
         paths: slugs.map((s) => ({
             params: { slug: s.split("/") },
         })),
-        // Admin panelden gelen yazılar için fallback blocking:
         fallback: "blocking",
     };
 };
@@ -461,9 +471,9 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     const slugParts = ((params?.slug as string[]) || []).filter(Boolean);
     const fullSlug = slugParts.join("/");
 
-    const { getArticle } = await import("@/lib/cms");
-
+    // 1) Önce disk (mevcut sistem bozulmasın)
     try {
+        const { getArticle } = await import("@/lib/cms");
         const a = getArticle(fullSlug);
 
         return {
@@ -475,6 +485,52 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
                 issueNumber: a.issueNumber ?? null,
                 authorId: a.authorId ?? null,
                 date: a.date ?? null,
+            },
+            revalidate: 60,
+        };
+    } catch {
+        // disk yoksa db'ye düş
+    }
+
+    // 2) Diskte yoksa Supabase (Sayı 4+)
+    try {
+        const { supabaseAdmin } = await import("@/lib/server/supabaseAdmin");
+        const sb = supabaseAdmin();
+
+        const { data, error } = await sb
+            .from("articles")
+            .select("slug,title,body,embed_url,audio_url,issue_number,author_id,date")
+            .eq("slug", fullSlug)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+            return {
+                props: {
+                    title: null,
+                    html: null,
+                    embedUrl: null,
+                    audioUrl: null,
+                    issueNumber: null,
+                    authorId: null,
+                    date: null,
+                },
+                revalidate: 60,
+            };
+        }
+
+        const html = data.body ? String(marked.parse(data.body)) : "";
+
+        return {
+            props: {
+                title: data.title ?? null,
+                html: html || null,
+                embedUrl: data.embed_url ?? null,
+                audioUrl: data.audio_url ?? null,
+                issueNumber: data.issue_number ?? null,
+                authorId: data.author_id ?? null,
+                date: data.date ?? null,
             },
             revalidate: 60,
         };
