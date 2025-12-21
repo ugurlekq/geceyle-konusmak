@@ -48,6 +48,31 @@ async function persistArticleToDisk(a: Article) {
         console.warn('Yazı kaydı sırasında hata:', err);
     }
 }
+async function persistArticleToDb(a: Article) {
+    const payload = {
+        slug: a.slug,
+        title: a.title,
+        excerpt: a.excerpt || "",
+        authorId: a.authorId,
+        issueNumber: Number(a.issueNumber),
+        date: a.date,
+        embedUrl: a.embedUrl || "",
+        audioUrl: (a as any).audioUrl || "",
+        body: a.body || "",
+    };
+
+    const r = await fetch("/api/admin/articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+
+    const d = await r.json().catch(() => ({} as any));
+    if (!r.ok || !d?.ok) {
+        console.warn("Supabase yazı kaydı API başarısız:", r.status, d);
+    }
+}
 
 async function removeArticleFromDisk(slug: string) {
     try {
@@ -151,6 +176,7 @@ export default function AdminPage() {
 
     // oturum + listeler
     useEffect(() => {
+        // 1️⃣ Admin oturumunu al
         (async () => {
             try {
                 const r = await fetch('/api/me', { cache: 'no-store' });
@@ -163,14 +189,27 @@ export default function AdminPage() {
             }
         })();
 
-        // 🔹 SAYILARI ÖNCE DİSKTEN, OLMAZSA LOCAL STORE’DAN YÜKLE
+        // 2️⃣ Sayılar + Yazılar (disk → local → db)
         (async () => {
+            // 🔹 Sayılar: disk → local fallback
             await loadIssuesFromDiskOrLocal(setIssues);
 
-            // Yazılar şimdilik sadece local store’dan (dinamik eklenenler)
+            // 🔹 Yazılar: önce local (fallback)
             setArts(getArticles());
+
+            // 🔹 Yazılar: sonra Supabase (asıl kaynak, üstüne yazar)
+            await refreshArticlesFromDb();
         })();
     }, []);
+
+    async function refreshArticlesFromDb() {
+        const r = await fetch("/api/admin/articles", { cache: "no-store", credentials: "include" });
+        const d = await r.json().catch(() => ({} as any));
+        if (r.ok && d?.ok && Array.isArray(d.items)) {
+            // d.items = merge edilmiş liste ise direkt bas
+            setArts(d.items);
+        }
+    }
 
     async function logout() {
         try {
@@ -287,7 +326,13 @@ export default function AdminPage() {
                             setArts(getArticles());
 
                             // disk
-                            await persistArticleToDisk(a);
+                            // 1-2-3 → disk, 4+ → supabase
+                            if (Number(a.issueNumber) >= 4) {
+                                await persistArticleToDb(a);
+                            } else {
+                                await persistArticleToDisk(a);
+                            }
+
 
                             setEditingArticle(null);
                         } finally {
