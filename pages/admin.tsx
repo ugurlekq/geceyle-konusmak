@@ -1,24 +1,66 @@
 ﻿// pages/admin.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 import type { Issue, Article } from '@/types';
-import {
-    getIssues,
-    getArticles,
-    saveIssue,
-    saveArticle,
-    deleteIssue,
-    deleteArticle,
-} from '@/lib/adminStore';
+import { getIssues, getArticles, saveIssue, saveArticle, deleteIssue, deleteArticle } from '@/lib/adminStore';
 import Footer from '@/components/Footer';
 import { authors } from '../data/authors';
 
 type Me = { email?: string; role?: 'user' | 'admin' } | null;
 
-/* ------------ API yardımcıları (disk kalıcılığı) ------------ */
+/* -------------------- küçük yardımcılar -------------------- */
+async function safeJson<T>(url: string, init?: RequestInit, fallback?: T): Promise<T> {
+    try {
+        const r = await fetch(url, init);
+        const d = await r.json().catch(() => ({} as any));
+        return (d ?? fallback) as T;
+    } catch {
+        return (fallback ?? ({} as any)) as T;
+    }
+}
+
+function issueNumOf(x: any): number {
+    // DB’den snake_case gelebilir: issue_number
+    return Number(x?.issueNumber ?? x?.issue_number ?? NaN);
+}
+
+/* ------------ Disk yardımcıları (issues + legacy articles 1-2-3) ------------ */
+async function persistIssueToDisk(issue: Issue) {
+    const d1 = await safeJson<any>('/api/content/issues', { cache: 'no-store', credentials: 'include' }, { items: [] });
+    const items: Issue[] = Array.isArray(d1.items) ? d1.items : [];
+
+    const idx = items.findIndex((x) => Number(x.number) === Number(issue.number));
+    if (idx >= 0) items[idx] = issue;
+    else items.push(issue);
+
+    const d2 = await safeJson<any>('/api/content/issues', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+    });
+
+    if (!d2?.ok) console.warn('Sayı kaydı (disk) başarısız:', d2);
+}
+
+async function removeIssueFromDisk(number: number) {
+    const d = await safeJson<any>(
+        '/api/content/issues?number=' + encodeURIComponent(String(number)),
+        { method: 'DELETE', credentials: 'include' }
+    );
+    if (!d?.ok) console.warn('Sayı silme (disk) başarısız:', d);
+}
+
+async function loadIssuesFromDiskOrLocal(setIssuesFn: (x: Issue[]) => void) {
+    const d = await safeJson<any>('/api/content/issues', { cache: 'no-store', credentials: 'include' }, { items: [] });
+    const items: Issue[] = Array.isArray(d.items) ? d.items : [];
+    if (items.length > 0) setIssuesFn(items);
+    else setIssuesFn(getIssues());
+}
+
 async function persistArticleToDisk(a: Article) {
     const payload = {
         id: a.id,
@@ -33,135 +75,74 @@ async function persistArticleToDisk(a: Article) {
         body: a.body || '',
     };
 
-    try {
-        const r = await fetch('/api/content/articles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload),
-        });
-        const d = await r.json().catch(() => ({} as any));
-        if (!r.ok || !d?.ok) {
-            console.warn('Yazı kaydı API başarısız:', r.status, d);
-        }
-    } catch (err) {
-        console.warn('Yazı kaydı sırasında hata:', err);
-    }
+    const d = await safeJson<any>('/api/content/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+    });
+
+    if (!d?.ok) console.warn('Yazı kaydı (disk) başarısız:', d);
 }
+
+async function removeArticleFromDisk(slug: string) {
+    const d = await safeJson<any>('/api/content/articles?slug=' + encodeURIComponent(slug), {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+
+    if (!d?.ok) console.warn('Yazı silme (disk) başarısız:', d);
+}
+
+/* ------------ DB yardımcıları (articles 4+) ------------ */
 async function persistArticleToDb(a: Article) {
     const payload = {
+        id: a.id,
         slug: a.slug,
         title: a.title,
-        excerpt: a.excerpt || "",
+        excerpt: a.excerpt || '',
         authorId: a.authorId,
         issueNumber: Number(a.issueNumber),
         date: a.date,
-        embedUrl: a.embedUrl || "",
-        audioUrl: (a as any).audioUrl || "",
-        body: a.body || "",
+        embedUrl: a.embedUrl || '',
+        audioUrl: (a as any).audioUrl || '',
+        body: a.body || '',
     };
 
-    const r = await fetch("/api/admin/articles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+    const r = await fetch('/api/admin/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(payload),
     });
 
     const d = await r.json().catch(() => ({} as any));
     if (!r.ok || !d?.ok) {
-        console.warn("Supabase yazı kaydı API başarısız:", r.status, d);
+        alert(`DB yazı kaydı başarısız: ${r.status} ${JSON.stringify(d)}`);
+        return false;
     }
+    return true;
 }
 
-async function removeArticleFromDisk(slug: string) {
-    try {
-        const r = await fetch(
-            '/api/content/articles?slug=' + encodeURIComponent(slug),
-            {
-                method: 'DELETE',
-                credentials: 'include',
-            }
-        );
-        const d = await r.json().catch(() => ({} as any));
-        if (!r.ok || !d?.ok) {
-            console.warn('Yazı silme API başarısız:', r.status, d);
-        }
-    } catch (err) {
-        console.warn('Yazı silme sırasında hata:', err);
+async function removeArticleFromDb(params: { id?: string; slug?: string }) {
+    const qs = params.id
+        ? `id=${encodeURIComponent(params.id)}`
+        : `slug=${encodeURIComponent(params.slug || '')}`;
+
+    const r = await fetch(`/api/admin/articles?${qs}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+
+    const d = await r.json().catch(() => ({} as any));
+    if (!r.ok || !d?.ok) {
+        alert(`DB yazı silme başarısız: ${r.status} ${JSON.stringify(d)}`);
+        return false;
     }
+    return true;
 }
 
-async function persistIssueToDisk(issue: Issue) {
-    try {
-        // 1) Mevcut sayıları oku
-        const r1 = await fetch('/api/content/issues', { cache: 'no-store' });
-        const d1 = await r1.json().catch(() => ({} as any));
-        const items: Issue[] = Array.isArray(d1.items) ? d1.items : [];
-
-        // 2) Yeni/var olan sayıyı ekle/güncelle
-        const idx = items.findIndex((x: Issue) => x.number === issue.number);
-        if (idx >= 0) items[idx] = issue;
-        else items.push(issue);
-
-        // 3) API’nin beklediği formatla kaydet
-        const payload = { items };
-
-        const r2 = await fetch('/api/content/issues', {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        const d2 = await r2.json().catch(() => ({} as any));
-        if (!r2.ok || !d2?.ok) {
-            console.warn('Sayı kaydı API başarısız:', r2.status, d2);
-        }
-    } catch (err) {
-        console.warn('Sayı kaydı sırasında hata:', err);
-    }
-}
-
-async function removeIssueFromDisk(number: number) {
-    try {
-        const r = await fetch(
-            '/api/content/issues?number=' + encodeURIComponent(String(number)),
-            {
-                method: 'DELETE',
-                credentials: 'include',
-            }
-        );
-        const d = await r.json().catch(() => ({} as any));
-        if (!r.ok || !d?.ok) {
-            console.warn('Sayı silme API başarısız:', r.status, d);
-        }
-    } catch (err) {
-        console.warn('Sayı silme sırasında hata:', err);
-    }
-}
-
-/** Diskten güncel sayı listesini oku, yoksa local store’a düş. */
-async function loadIssuesFromDiskOrLocal(setIssuesFn: (x: Issue[]) => void) {
-    try {
-        const r = await fetch('/api/content/issues', {
-            cache: 'no-store',
-            credentials: 'include',
-        });
-
-        const d = await r.json().catch(() => ({} as any));
-        const items: Issue[] = Array.isArray(d.items) ? d.items : [];
-        if (items.length > 0) {
-            setIssuesFn(items);
-            return;
-        }
-    } catch (err) {
-        console.warn('Diskten sayı okunamadı, local store kullanılacak:', err);
-    }
-    setIssuesFn(getIssues());
-}
-
-/* --------------------- Sayfa bileşeni --------------------- */
-
+/* --------------------- Sayfa --------------------- */
 export default function AdminPage() {
     const [me, setMe] = useState<Me>(null);
     const [loading, setLoading] = useState(true);
@@ -170,17 +151,22 @@ export default function AdminPage() {
     const [arts, setArts] = useState<Article[]>([]);
     const [busy, setBusy] = useState(false);
 
-    // düzenleme modları
     const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
     const [editingArticle, setEditingArticle] = useState<Article | null>(null);
 
+    async function refreshArticlesFromDb() {
+        const r = await fetch('/api/admin/articles', { cache: 'no-store', credentials: 'include' });
+        const d = await r.json().catch(() => ({} as any));
+        if (r.ok && d?.ok && Array.isArray(d.items)) return d.items as Article[];
+        return null;
+    }
+
     // oturum + listeler
     useEffect(() => {
-        // 1️⃣ Admin oturumunu al
         (async () => {
             try {
                 const r = await fetch('/api/me', { cache: 'no-store' });
-                const d = await r.json();
+                const d = await r.json().catch(() => ({} as any));
                 setMe(d?.email ? d : null);
             } catch {
                 setMe(null);
@@ -189,27 +175,33 @@ export default function AdminPage() {
             }
         })();
 
-        // 2️⃣ Sayılar + Yazılar (disk → local → db)
         (async () => {
-            // 🔹 Sayılar: disk → local fallback
+            // issues: disk -> local
             await loadIssuesFromDiskOrLocal(setIssues);
 
-            // 🔹 Yazılar: önce local (fallback)
-            setArts(getArticles());
+            // articles: önce local (legacy)
+            const localArts = getArticles();
+            setArts(localArts);
 
-            // 🔹 Yazılar: sonra Supabase (asıl kaynak, üstüne yazar)
-            await refreshArticlesFromDb();
+            // sonra DB (4+)
+            const dbArts = await refreshArticlesFromDb();
+            if (dbArts && dbArts.length) {
+                // merge: DB baskın (slug/id ile tekilleştir)
+                const map = new Map<string, any>();
+
+                for (const a of localArts) {
+                    const k = (a.slug || a.id || Math.random().toString(36)) as string;
+                    map.set(k, a);
+                }
+                for (const a of dbArts) {
+                    const k = (a.slug || a.id) as string;
+                    if (k) map.set(k, a);
+                }
+
+                setArts(Array.from(map.values()));
+            }
         })();
     }, []);
-
-    async function refreshArticlesFromDb() {
-        const r = await fetch("/api/admin/articles", { cache: "no-store", credentials: "include" });
-        const d = await r.json().catch(() => ({} as any));
-        if (r.ok && d?.ok && Array.isArray(d.items)) {
-            // d.items = merge edilmiş liste ise direkt bas
-            setArts(d.items);
-        }
-    }
 
     async function logout() {
         try {
@@ -218,24 +210,25 @@ export default function AdminPage() {
         location.href = '/';
     }
 
+    const sortedIssues = useMemo(() => issues.slice().sort((a, b) => b.number - a.number), [issues]);
+
+    const sortedArts = useMemo(() => {
+        return arts
+            .slice()
+            .sort((a: any, b: any) => new Date(b.date as any).getTime() - new Date(a.date as any).getTime());
+    }, [arts]);
+
     if (loading) {
-        return (
-            <div className="min-h-screen bg-black text-white grid place-items-center">
-                Yükleniyor…
-            </div>
-        );
+        return <div className="min-h-screen bg-black text-white grid place-items-center">Yükleniyor…</div>;
     }
 
     if (me?.role !== 'admin') {
         return (
             <div className="min-h-screen bg-black text-white grid place-items-center p-6">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6 w-[380px] text-center">
-                    <h1 className="text-amber-300 text-xl mb-2">
-                        Yetkisiz Erişim
-                    </h1>
+                    <h1 className="text-amber-300 text-xl mb-2">Yetkisiz Erişim</h1>
                     <p className="text-white/70 mb-4">
-                        Bu sayfa sadece{' '}
-                        <span className="text-amber-300">admin</span> kullanıcıya açıktır.
+                        Bu sayfa sadece <span className="text-amber-300">admin</span> kullanıcıya açıktır.
                     </p>
                     <Link
                         href="/login"
@@ -250,7 +243,6 @@ export default function AdminPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-black text-white">
-            {/* içerik */}
             <div className="flex-1 p-6">
                 {/* Üst bar */}
                 <div className="flex items-center justify-between mb-6">
@@ -278,12 +270,9 @@ export default function AdminPage() {
                     </div>
                 </div>
 
+                <h1 className="text-2xl text-amber-300 mb-6">Geceyle Konuşmak — Admin Paneli</h1>
 
-                <h1 className="text-2xl text-amber-300 mb-6">
-                    Geceyle Konuşmak — Admin Paneli
-                </h1>
-
-                {/* Yeni / Düzenle Sayı */}
+                {/* Issue Form */}
                 <IssueForm
                     editing={editingIssue}
                     onCancelEdit={() => setEditingIssue(null)}
@@ -291,17 +280,13 @@ export default function AdminPage() {
                         try {
                             setBusy(true);
 
-                            // 1) local store (eski davranışı koruyalım)
+                            // local (fallback)
                             saveIssue(i);
 
-                            // 2) diske yaz
-                            try {
-                                await persistIssueToDisk(i);
-                            } catch (err) {
-                                console.warn('Sayı diske yazılamadı:', err);
-                            }
+                            // disk
+                            await persistIssueToDisk(i);
 
-                            // 3) 🔹 UI’ı mutlaka diskteki gerçek listeyle güncelle
+                            // UI refresh
                             await loadIssuesFromDiskOrLocal(setIssues);
 
                             setEditingIssue(null);
@@ -311,7 +296,7 @@ export default function AdminPage() {
                     }}
                 />
 
-                {/* Yeni / Düzenle Yazı */}
+                {/* Article Form */}
                 <ArticleForm
                     issues={issues}
                     editing={editingArticle}
@@ -321,18 +306,25 @@ export default function AdminPage() {
                             setBusy(true);
                             a.issueNumber = Number(a.issueNumber);
 
-                            // local store
+                            // local fallback listede hemen görünsün
                             saveArticle(a);
                             setArts(getArticles());
 
-                            // disk
-                            // 1-2-3 → disk, 4+ → supabase
                             if (Number(a.issueNumber) >= 4) {
-                                await persistArticleToDb(a);
+                                const ok = await persistArticleToDb(a);
+                                if (ok) {
+                                    const dbArts = await refreshArticlesFromDb();
+                                    if (dbArts) {
+                                        const localArts = getArticles();
+                                        const map = new Map<string, any>();
+                                        for (const x of localArts) map.set((x.slug || x.id) as string, x);
+                                        for (const x of dbArts) map.set((x.slug || x.id) as string, x);
+                                        setArts(Array.from(map.values()));
+                                    }
+                                }
                             } else {
                                 await persistArticleToDisk(a);
                             }
-
 
                             setEditingArticle(null);
                         } finally {
@@ -343,18 +335,18 @@ export default function AdminPage() {
 
                 {/* Listeler */}
                 <div className="grid md:grid-cols-2 gap-6 mt-8">
-                    {/* Sayılar listesi */}
+                    {/* Issues */}
                     <Card title="Sayılar">
-                        {issues.length === 0 ? (
+                        {sortedIssues.length === 0 ? (
                             <p className="text-white/60">Henüz sayı yok.</p>
                         ) : (
                             <ul className="space-y-2">
-                                {issues
-                                    .slice()
-                                    .sort((a, b) => b.number - a.number)
-                                    .map((i) => (
+                                {sortedIssues.map((i) => {
+                                    const hasArticles = arts.some((a: any) => Number(issueNumOf(a)) === Number(i.number));
+
+                                    return (
                                         <li
-                                            key={i.number}
+                                            key={String(i.number)}
                                             className="flex items-center justify-between rounded-lg border border-white/10 p-3 gap-3"
                                         >
                                             <div>
@@ -373,7 +365,7 @@ export default function AdminPage() {
                                                 </button>
 
                                                 <Link
-                                                    href={i.number === 1 ? "/issue01" : `/issues/${String(i.number).padStart(2, "0")}`}
+                                                    href={i.number === 1 ? '/issue01' : `/issues/${String(i.number).padStart(2, '0')}`}
                                                     className="text-amber-300 hover:text-amber-200 text-sm"
                                                     target="_blank"
                                                 >
@@ -381,16 +373,24 @@ export default function AdminPage() {
                                                 </Link>
 
                                                 <button
-                                                    disabled={busy}
+                                                    disabled={busy || hasArticles}
                                                     onClick={async () => {
+                                                        if (hasArticles) {
+                                                            alert('Bu sayı silinemez çünkü içinde yazı var. Önce bu sayıya ait yazıları silmelisin.');
+                                                            return;
+                                                        }
+                                                        if (!confirm(`Sayı ${i.number} silinsin mi?`)) return;
+
                                                         try {
                                                             setBusy(true);
 
-                                                            // ✅ localstore’u da number ile temizle (adminStore’u buna göre ayarlayacağız)
-                                                            // deleteIssue(i.number);
-
+                                                            // disk
                                                             await removeIssueFromDisk(i.number);
 
+                                                            // local fallback (temizle)
+                                                            deleteIssue(i.number);
+
+                                                            // UI refresh
                                                             await loadIssuesFromDiskOrLocal(setIssues);
 
                                                             if (editingIssue?.number === i.number) setEditingIssue(null);
@@ -398,52 +398,59 @@ export default function AdminPage() {
                                                             setBusy(false);
                                                         }
                                                     }}
-                                                    className="text-red-300 hover:text-red-200 disabled:opacity-50 text-sm"
+                                                    title={hasArticles ? 'Bu sayıda yazı olduğu için silinemez.' : 'Sayıyı sil'}
+                                                    className={[
+                                                        'text-sm disabled:opacity-50',
+                                                        hasArticles ? 'text-white/30 cursor-not-allowed' : 'text-red-300 hover:text-red-200',
+                                                    ].join(' ')}
                                                 >
                                                     Sil
                                                 </button>
                                             </div>
                                         </li>
-                                    ))}
-
+                                    );
+                                })}
                             </ul>
                         )}
                     </Card>
 
-                    {/* Yazılar listesi */}
+                    {/* Articles */}
                     <Card title="Yazılar">
-                        {arts.length === 0 ? (
+                        {sortedArts.length === 0 ? (
                             <p className="text-white/60">Henüz yazı yok.</p>
                         ) : (
                             <ul className="space-y-2">
-                                {arts
-                                    .slice()
-                                    .sort(
-                                        (a, b) =>
-                                            new Date(b.date as any).getTime() -
-                                            new Date(a.date as any).getTime()
-                                    )
-                                    .map((a) => (
+                                {sortedArts.map((a: any) => {
+                                    const n = issueNumOf(a);
+
+                                    return (
                                         <li
-                                            key={a.id}
+                                            key={String(a.id || a.slug)}
                                             className="flex items-center justify-between rounded-lg border border-white/10 p-3"
                                         >
                                             <div>
-                                                <div className="text-amber-300">
-                                                    {a.title}
-                                                </div>
+                                                <div className="text-amber-300">{a.title}</div>
                                                 <div className="text-xs text-white/60">
-                                                    Sayı {a.issueNumber} •{' '}
-                                                    {a.authorId} • {a.date}
+                                                    Sayı {n} • {a.authorId ?? a.author_id} • {a.date}
                                                 </div>
                                             </div>
+
                                             <div className="flex items-center gap-3">
                                                 <button
                                                     className="text-xs text-amber-200 hover:text-amber-100"
-                                                    onClick={() => setEditingArticle(a)}
+                                                    onClick={() =>
+                                                        setEditingArticle({
+                                                            ...a,
+                                                            issueNumber: n,
+                                                            authorId: a.authorId ?? a.author_id,
+                                                            embedUrl: a.embedUrl ?? a.embed_url,
+                                                            audioUrl: a.audioUrl ?? a.audio_url,
+                                                        })
+                                                    }
                                                 >
                                                     Düzenle
                                                 </button>
+
                                                 <button
                                                     disabled={busy}
                                                     onClick={async () => {
@@ -451,19 +458,32 @@ export default function AdminPage() {
 
                                                         try {
                                                             setBusy(true);
-                                                            deleteArticle(a.id); // UI
-                                                            setArts(getArticles());
-                                                            if (a.slug) {
-                                                                await removeArticleFromDisk(
-                                                                    a.slug
-                                                                ); // Disk
+
+                                                            const issueN = Number(n);
+
+                                                            // UI local temizliği
+                                                            if (a.id) deleteArticle(a.id);
+                                                            setArts((prev) => prev.filter((x: any) => (x.id || x.slug) !== (a.id || a.slug)));
+
+                                                            if (issueN >= 4) {
+                                                                // DB delete + refresh
+                                                                const ok = await removeArticleFromDb({ id: a.id, slug: a.slug });
+                                                                if (ok) {
+                                                                    const dbArts = await refreshArticlesFromDb();
+                                                                    if (dbArts) {
+                                                                        const localArts = getArticles();
+                                                                        const map = new Map<string, any>();
+                                                                        for (const x of localArts) map.set((x.slug || x.id) as string, x);
+                                                                        for (const x of dbArts) map.set((x.slug || x.id) as string, x);
+                                                                        setArts(Array.from(map.values()));
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                // legacy disk delete
+                                                                if (a.slug) await removeArticleFromDisk(a.slug);
                                                             }
-                                                            if (
-                                                                editingArticle &&
-                                                                editingArticle.id === a.id
-                                                            ) {
-                                                                setEditingArticle(null);
-                                                            }
+
+                                                            if (editingArticle?.id === a.id) setEditingArticle(null);
                                                         } finally {
                                                             setBusy(false);
                                                         }
@@ -474,20 +494,20 @@ export default function AdminPage() {
                                                 </button>
                                             </div>
                                         </li>
-                                    ))}
+                                    );
+                                })}
                             </ul>
                         )}
                     </Card>
                 </div>
             </div>
 
-            {/* footer sadece admin panelinde */}
             <Footer />
         </div>
     );
 }
 
-/* ---------- Yardımcı Bileşenler ---------- */
+/* ---------- UI helpers ---------- */
 function Card({ title, children }: { title: string; children: any }) {
     return (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -497,7 +517,7 @@ function Card({ title, children }: { title: string; children: any }) {
     );
 }
 
-/* ----------------- Sayı formu (yeni/düzenle) ----------------- */
+/* ----------------- IssueForm ----------------- */
 function IssueForm({
                        onSave,
                        editing,
@@ -514,7 +534,6 @@ function IssueForm({
     const [description, setDescription] = useState('');
     const [coverUrl, setCoverUrl] = useState('');
 
-    // editing değişince formu doldur / sıfırla
     useEffect(() => {
         if (editing) {
             setId(editing.id);
@@ -542,44 +561,25 @@ function IssueForm({
                     className="md:col-span-1 input"
                     type="number"
                     value={number}
-                    onChange={(e) =>
-                        setNumber(parseInt(e.target.value || '0', 10))
-                    }
+                    onChange={(e) => setNumber(parseInt(e.target.value || '0', 10))}
                     placeholder="Sayı No"
                 />
-                <input
-                    className="md:col-span-2 input"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Başlık"
-                />
-                <input
-                    className="md:col-span-2 input"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    type="date"
-                />
+                <input className="md:col-span-2 input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Başlık" />
+                <input className="md:col-span-2 input" value={date} onChange={(e) => setDate(e.target.value)} type="date" />
                 <input
                     className="md:col-span-3 input"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Kısa açıklama"
                 />
-                <input
-                    className="md:col-span-2 input"
-                    value={coverUrl}
-                    onChange={(e) => setCoverUrl(e.target.value)}
-                    placeholder="Kapak görseli (URL)"
-                />
+                <input className="md:col-span-2 input" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Kapak görseli (URL)" />
             </div>
+
             <div className="mt-3 flex gap-3">
                 <button
                     onClick={() =>
                         onSave({
-                            id:
-                                id ??
-                                crypto.randomUUID?.() ??
-                                Math.random().toString(36).slice(2),
+                            id: id ?? (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)),
                             number: Number(number),
                             title,
                             date,
@@ -591,6 +591,7 @@ function IssueForm({
                 >
                     {isEdit ? 'Güncelle' : 'Kaydet'}
                 </button>
+
                 {isEdit && onCancelEdit && (
                     <button
                         type="button"
@@ -605,7 +606,7 @@ function IssueForm({
     );
 }
 
-/* ----------------- Yazı formu (yeni/düzenle) ----------------- */
+/* ----------------- ArticleForm ----------------- */
 function ArticleForm({
                          issues,
                          onSave,
@@ -618,28 +619,25 @@ function ArticleForm({
     onCancelEdit?: () => void;
 }) {
     const [id, setId] = useState<string | null>(null);
-    const [issueNumber, setIssueNumber] = useState<number>(
-        issues[0]?.number ?? 1
-    );
+    const [issueNumber, setIssueNumber] = useState<number>(issues[0]?.number ?? 1);
     const [title, setTitle] = useState('');
     const [slug, setSlug] = useState('');
-    const [authorId, setAuthorId] = useState('leon-varis'); // default
+    const [authorId, setAuthorId] = useState('leon-varis');
     const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
     const [excerpt, setExcerpt] = useState('');
     const [embedUrl, setEmbedUrl] = useState('');
     const [body, setBody] = useState('');
 
-    // issues ya da editing değişince formu doldur / sıfırla
     useEffect(() => {
         if (editing) {
             setId(editing.id);
-            setIssueNumber(editing.issueNumber ?? issues[0]?.number ?? 1);
+            setIssueNumber((editing.issueNumber as any) ?? issues[0]?.number ?? 1);
             setTitle(editing.title ?? '');
             setSlug(editing.slug ?? '');
             setAuthorId(editing.authorId ?? 'leon-varis');
             setDate(editing.date ?? new Date().toISOString().slice(0, 10));
             setExcerpt(editing.excerpt ?? '');
-            setEmbedUrl(editing.embedUrl ?? '');
+            setEmbedUrl((editing as any).embedUrl ?? '');
             setBody(editing.body ?? '');
         } else {
             setId(null);
@@ -659,48 +657,24 @@ function ArticleForm({
     return (
         <Card title={isEdit ? 'Yazıyı Düzenle' : 'Yeni Yazı'}>
             <div className="grid md:grid-cols-6 gap-3">
-                {/* Hangi sayıya ait? */}
-                <select
-                    className="md:col-span-1 input"
-                    value={issueNumber}
-                    onChange={(e) =>
-                        setIssueNumber(parseInt(e.target.value, 10))
-                    }
-                >
+                <select className="md:col-span-1 input" value={issueNumber} onChange={(e) => setIssueNumber(parseInt(e.target.value, 10))}>
                     {issues
                         .slice()
                         .sort((a, b) => b.number - a.number)
                         .map((i) => {
-                            const label = i.title
-                                ? `Sayı ${i.number} — ${i.title}`
-                                : `Sayı ${i.number}`;
+                            const label = i.title ? `Sayı ${i.number} — ${i.title}` : `Sayı ${i.number}`;
                             return (
-                                <option key={i.id} value={i.number}>
+                                <option key={String(i.number)} value={i.number}>
                                     {label}
                                 </option>
                             );
                         })}
                 </select>
 
-                <input
-                    className="md:col-span-3 input"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Başlık"
-                />
-                <input
-                    className="md:col-span-2 input"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder="slug (kısa-url)"
-                />
+                <input className="md:col-span-3 input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Başlık" />
+                <input className="md:col-span-2 input" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug (kısa-url)" />
 
-                {/* Yazar dropdown'u */}
-                <select
-                    className="md:col-span-2 input"
-                    value={authorId}
-                    onChange={(e) => setAuthorId(e.target.value)}
-                >
+                <select className="md:col-span-2 input" value={authorId} onChange={(e) => setAuthorId(e.target.value)}>
                     {authors.map((a) => (
                         <option key={a.id} value={a.id}>
                             {a.name}
@@ -708,39 +682,17 @@ function ArticleForm({
                     ))}
                 </select>
 
-                <input
-                    className="md:col-span-2 input"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    type="date"
-                />
-                <input
-                    className="md:col-span-2 input"
-                    value={embedUrl}
-                    onChange={(e) => setEmbedUrl(e.target.value)}
-                    placeholder="YouTube URL (opsiyonel)"
-                />
-                <input
-                    className="md:col-span-6 input"
-                    value={excerpt}
-                    onChange={(e) => setExcerpt(e.target.value)}
-                    placeholder="Kısa özet"
-                />
-                <textarea
-                    className="md:col-span-6 input h-40"
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder="İçerik (opsiyonel)"
-                />
+                <input className="md:col-span-2 input" value={date} onChange={(e) => setDate(e.target.value)} type="date" />
+                <input className="md:col-span-2 input" value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} placeholder="YouTube URL (opsiyonel)" />
+                <input className="md:col-span-6 input" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Kısa özet" />
+                <textarea className="md:col-span-6 input h-40" value={body} onChange={(e) => setBody(e.target.value)} placeholder="İçerik (opsiyonel)" />
             </div>
+
             <div className="mt-3 flex gap-3">
                 <button
                     onClick={() =>
                         onSave({
-                            id:
-                                id ??
-                                crypto.randomUUID?.() ??
-                                Math.random().toString(36).slice(2),
+                            id: id ?? (crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)),
                             issueNumber: Number(issueNumber),
                             title,
                             slug,
@@ -755,12 +707,9 @@ function ArticleForm({
                 >
                     {isEdit ? 'Güncelle' : 'Kaydet'}
                 </button>
+
                 {isEdit && onCancelEdit && (
-                    <button
-                        type="button"
-                        onClick={onCancelEdit}
-                        className="px-4 py-2 rounded-xl border border-white/20 text-sm text-white/70 hover:bg-white/10"
-                    >
+                    <button type="button" onClick={onCancelEdit} className="px-4 py-2 rounded-xl border border-white/20 text-sm text-white/70 hover:bg-white/10">
                         Vazgeç
                     </button>
                 )}
