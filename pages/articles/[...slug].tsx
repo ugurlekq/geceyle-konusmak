@@ -62,7 +62,12 @@ export default function ArticlePage({
     const slugParts = ((router.query.slug as string[]) || []).filter(Boolean);
 
     // ✅ Stabil slug
-    const pageSlug = useMemo(() => slugParts.join("/"), [router.query.slug]);
+    const pageSlug = useMemo(() => {
+        if (!router.isReady) return "";
+        const parts = (router.query.slug as string[] | undefined) ?? [];
+        return parts.filter(Boolean).join("/");
+    }, [router.isReady, router.query.slug]);
+
 
     // ✅ Meta state (tek kaynaktan)
     const [likeCount, setLikeCount] = useState<number>(0);
@@ -98,13 +103,23 @@ export default function ArticlePage({
         return v;
     }
 
-    async function refreshMeta() {
+    async function refreshMeta(signal?: AbortSignal) {
         if (!pageSlug) return;
+
         setLoadingMeta(true);
         try {
             const r = await fetch(
-                `/api/article-meta?slug=${encodeURIComponent(pageSlug)}`
+                `/api/article-meta?slug=${encodeURIComponent(pageSlug)}&t=${Date.now()}`,
+                {
+                    cache: "no-store",
+                    signal,
+                    headers: {
+                        "Cache-Control": "no-store",
+                        Pragma: "no-cache",
+                    },
+                }
             );
+
             const j = await r.json().catch(() => null);
 
             if (r.ok && j?.ok) {
@@ -115,6 +130,15 @@ export default function ArticlePage({
             setLoadingMeta(false);
         }
     }
+    useEffect(() => {
+        if (!router.isReady) return;
+        if (!pageSlug) return;
+
+        const ac = new AbortController();
+        refreshMeta(ac.signal).catch(() => {});
+        return () => ac.abort();
+    }, [router.isReady, pageSlug]);
+
 
     useEffect(() => {
         if (!pageSlug) return;
