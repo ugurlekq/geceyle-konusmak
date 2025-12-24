@@ -1,11 +1,12 @@
 ﻿// /pages/articles/[...slug].tsx
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {Component, useEffect, useMemo, useRef, useState} from "react";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { marked } from "marked";
 
+import SupportThisText from "@/components/SupportThisText";
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
@@ -355,6 +356,10 @@ export default function ArticlePage({
                     )}
                 </motion.div>
 
+                <div className="mt-10 border-t border-white/10 pt-8">
+                    <SupportThisText slug={pageSlug} title={finalTitle} />
+                </div>
+                
                 {/* ✅ Like + Comments */}
                 <div className="mt-10 border-t border-white/10 pt-8">
                     <div className="flex items-center gap-4">
