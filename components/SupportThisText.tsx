@@ -7,28 +7,24 @@ type Props = {
 };
 
 const AMOUNTS = [
-    { label: "☕ 10 TL", amount: 10 },
-    { label: "☕☕ 25 TL", amount: 25 },
-    { label: "☕☕☕ 50 TL", amount: 50 },
+    { label: " 1", amount: 1 },
+    { label: "☕ 2.5", amount: 2.5 },
+    { label: "☕☕ 5", amount: 5 },
 ];
 
-function safeBuildUrl(base: string, params: Record<string, string | undefined>) {
+function safeBuildUrl(baseRaw: string, params: Record<string, string | undefined>) {
+    const base = (baseRaw || "").trim();
     if (!base) return null;
 
-    // "buymeacoffee.com/xxx" yazılırsa https ekle
+    // Protokol yoksa ekle
     const normalized =
-        base.startsWith("http://") || base.startsWith("https://")
-            ? base
-            : `https://${base}`;
+        base.startsWith("http://") || base.startsWith("https://") ? base : `https://${base}`;
 
     try {
         const u = new URL(normalized);
-
-        // UTM'ler
         Object.entries(params).forEach(([k, v]) => {
             if (v) u.searchParams.set(k, v);
         });
-
         return u.toString();
     } catch {
         return null;
@@ -36,38 +32,35 @@ function safeBuildUrl(base: string, params: Record<string, string | undefined>) 
 }
 
 export default function SupportThisText({ slug, title }: Props) {
-    // ✅ SSR-safe: env yoksa "" döner → component hiç render olmaz
-    const base = process.env.NEXT_PUBLIC_BMC_URL?.trim() || "";
+    const base = (process.env.NEXT_PUBLIC_BMC_URL || "").trim();
 
-    // ✅ base absolute değilse bile safeBuildUrl normalize ediyor
+    // base yoksa hiç render etmeyelim
+    if (!base) return null;
+
     const links = useMemo(() => {
-        if (!base) return [];
-
         return AMOUNTS.map((x) => {
             const href =
                 safeBuildUrl(base, {
-                    utm_source: "geceyle-konusmak",
-                    utm_medium: "support",
-                    utm_campaign: "article",
                     utm_content: slug,
                     utm_term: title,
+                    utm_medium: "support",
+                    utm_campaign: "article",
                     utm_amount: String(x.amount),
-                }) || safeBuildUrl(base, {}) || null;
+                }) || base;
 
             return { ...x, href };
-        }).filter((x) => !!x.href) as Array<{ label: string; amount: number; href: string }>;
+        });
     }, [base, slug, title]);
-
-    // ✅ base yoksa hiç gösterme
-    if (!base || links.length === 0) return null;
 
     return (
         <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="text-white/85 font-semibold">
-                Bu yazı sende bir yerde karşılık bulduysa…
+                Bu metin sende bir yerde karşılık bulduysa,
             </div>
-            <div className="mt-1 text-white/60 text-sm">
-                Küçük bir destek bırakabilirsin. Bu bir zorunluluk değil.
+
+            <div className="mt-1 text-white/70 text-sm">
+                emeğe küçük bir destek bırakabilirsin.{" "}
+                <span className="text-white/55">Teşekkürler.</span>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -76,12 +69,17 @@ export default function SupportThisText({ slug, title }: Props) {
                         key={x.amount}
                         href={x.href}
                         target="_blank"
-                        rel="noopener noreferrer"
+                        rel="noreferrer"
                         className="px-3 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition text-white/85 text-sm"
+                        title="Buy Me a Coffee sayfasında para birimi otomatik seçilir."
                     >
-                        {x.label}
+                        ☕ {x.label}
                     </a>
                 ))}
+            </div>
+
+            <div className="mt-2 text-[12px] text-white/45">
+                Ödeme Buy Me a Coffee üzerinden <span className="text-white/60">USD</span> olarak alınır.
             </div>
         </div>
     );
