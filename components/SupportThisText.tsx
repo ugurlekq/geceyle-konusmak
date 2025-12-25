@@ -7,9 +7,9 @@ type Props = {
 };
 
 const AMOUNTS = [
-    { label: " 1", amount: 1 },
-    { label: "☕ 2.5", amount: 2.5 },
-    { label: "☕☕ 5", amount: 5 },
+    { label: " ☕1", amount: 1 },
+    { label: " ☕☕ 2.5", amount: 2.5 },
+    { label: " ☕☕☕ 5", amount: 5 },
 ];
 
 function safeBuildUrl(baseRaw: string, params: Record<string, string | undefined>) {
@@ -73,7 +73,7 @@ export default function SupportThisText({ slug, title }: Props) {
                         className="px-3 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition text-white/85 text-sm"
                         title="Buy Me a Coffee sayfasında para birimi otomatik seçilir."
                     >
-                        ☕ {x.label}
+                         {x.label}
                     </a>
                 ))}
             </div>
