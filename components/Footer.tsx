@@ -34,12 +34,6 @@ export default function Footer() {
                             Anasayfa
                         </Link>
                         <Link
-                            href="/subscribe"
-                            className="text-white/70 hover:text-amber-300 transition"
-                        >
-                            Abone Ol
-                        </Link>
-                        <Link
                             href="/issue01"
                             className="text-white/70 hover:text-amber-300 transition"
                         >

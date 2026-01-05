@@ -41,7 +41,7 @@ export default function Hero() {
                         href="#membership"
                         className="inline-flex items-center rounded-xl border border-amber-400/70 text-amber-300 px-5 py-2.5 bg-black/30 hover:bg-amber-400 hover:text-black transition"
                     >
-                        Üyeliği incele
+                        Tanışalım
                     </Link>
                 </div>
             </motion.div>

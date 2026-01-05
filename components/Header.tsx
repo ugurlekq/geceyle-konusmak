@@ -204,6 +204,14 @@ export default function Header() {
                                             </button>
                                         );
                                     })}
+                                    {/* Tüm sayılar */}
+                                    <Link
+                                        href="/issues"
+                                        onClick={() => setOpen(false)}
+                                        className="block w-full text-left px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+                                    >
+                                        Tüm sayılar →
+                                    </Link>
                                 </div>
 
                                 {user?.role === 'admin' && (
@@ -219,7 +227,7 @@ export default function Header() {
                             </div>
                         )}
                     </div>
-
+                    
                     <Link
                         href="/authors/leon-varis"
                         className={`rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-black/30 hover:bg-white/10 transition ${

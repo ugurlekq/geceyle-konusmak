@@ -303,19 +303,20 @@ export const getStaticPaths: GetStaticPaths = async () => {
     };
 };
 
+// pages/authors/[id].tsx
+
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     const id = String(params?.id);
     const author = getAuthorById(id);
 
-    if (!author) {
-        return { notFound: true };
-    }
+    if (!author) return { notFound: true };
 
     try {
+        // 1) CMS (md)
         const { getAllArticles } = await import('@/lib/cms');
         const all = (getAllArticles() ?? []) as any[];
 
-        const articles: ArticleCard[] = all
+        const cmsArticles: ArticleCard[] = all
             .filter((a) => a.authorId === id)
             .map((a) => ({
                 slug: String(a.slug),
@@ -325,10 +326,40 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
                 date: a.date ?? null,
             }));
 
+        // 2) Supabase (published)
+        let sbArticles: ArticleCard[] = [];
+        try {
+            const { supabaseAdmin } = await import('@/lib/server/supabaseAdmin');
+            const sb = supabaseAdmin();
+
+            const { data, error } = await sb
+                .from('articles')
+                .select('slug,title,excerpt,issue_number,date,author_id')
+                .eq('author_id', id)
+                .order('date', { ascending: false });
+
+            if (!error && Array.isArray(data)) {
+                sbArticles = data.map((a: any) => ({
+                    slug: String(a.slug),
+                    title: String(a.title),
+                    excerpt: a.excerpt ?? null,
+                    issueNumber: a.issue_number ?? null,
+                    date: a.date ?? null,
+                }));
+            }
+        } catch {
+            // supabase yoksa patlatma
+            sbArticles = [];
+        }
+
+        // 3) Merge + uniq (slug)
+        const merged = [...cmsArticles, ...sbArticles];
+        const uniq = Array.from(new Map(merged.map((a) => [a.slug, a])).values());
+
         return {
             props: {
                 author,
-                articles,
+                articles: uniq,
                 allAuthors: authors,
             },
             revalidate: 60,
@@ -344,3 +375,4 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
         };
     }
 };
+

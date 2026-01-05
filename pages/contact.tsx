@@ -28,7 +28,7 @@ export default function ContactPage() {
                         href="mailto:admin@geceylekonusmak.org"
                         className="inline-flex items-center gap-2 rounded-xl border border-amber-400/70 px-3.5 py-2 text-amber-200 bg-black/40 hover:bg-amber-400 hover:text-black transition"
                     >
-                        📮 admin@geceylekonusmak.org
+                        📮 barisgurlek@hotmail.com
                     </a>
                 </div>
 
