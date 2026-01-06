@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import type { UserSession } from '@/types';
+import { useSession, signOut } from 'next-auth/react';
 
 type IssueLite = { id: string; number: number; title?: string };
 
@@ -12,7 +12,20 @@ export default function Header() {
     const router = useRouter();
     const pathname = router.asPath || '/';
 
-    const [user, setUser] = useState<UserSession | null>(null);
+    // ✅ NextAuth session: /api/me fetch yok, state yok
+    const { data: session, status } = useSession();
+
+    // session.user içine role ekliyorsun (authOptions callback’lerinden)
+    const u = (session?.user ?? null) as any | null;
+
+    const user = u?.email
+        ? {
+            email: u.email as string,
+            name: (u.name as string | undefined) ?? null,
+            role: (u.role as 'admin' | 'user' | undefined) ?? 'user',
+        }
+        : null;
+
     const [issues, setIssues] = useState<IssueLite[]>([]);
     const [open, setOpen] = useState(false);
     const ddRef = useRef<HTMLDivElement | null>(null);
@@ -22,35 +35,10 @@ export default function Header() {
         return pathname.startsWith(href);
     }
 
-    async function loadMe() {
-        try {
-            const r = await fetch('/api/me', {
-                cache: 'no-store',
-                credentials: 'include',
-            });
-            const d = await r.json();
-            setUser(d?.email ? (d as UserSession) : null);
-        } catch {
-            setUser(null);
-        }
-    }
-
+    // ziyaret sayacı kalsın
     useEffect(() => {
         fetch('/api/visit', { method: 'POST', credentials: 'include' }).catch(() => {});
     }, []);
-
-
-    /* ------------------ Kullanıcı oturumunu oku ------------------ */
-    useEffect(() => {
-        loadMe();
-    }, []);
-
-    /* ------------- Route değişince user’ı tekrar kontrol et ------------- */
-    useEffect(() => {
-        const onRoute = () => loadMe();
-        router.events?.on('routeChangeComplete', onRoute);
-        return () => router.events?.off('routeChangeComplete', onRoute);
-    }, [router.events]);
 
     /* ------------- Sayı listesini API + adminStore’dan çek ------------- */
     useEffect(() => {
@@ -59,9 +47,7 @@ export default function Header() {
                 // 1) API’den yayınlanmış sayılar
                 let apiItems: any[] = [];
                 try {
-                    const r = await fetch('/api/content/issues', {
-                        cache: 'no-store',
-                    });
+                    const r = await fetch('/api/content/issues', { cache: 'no-store' });
                     const d = await r.json();
                     apiItems = Array.isArray(d?.items) ? (d.items as any[]) : [];
                 } catch {
@@ -95,7 +81,6 @@ export default function Header() {
                         )
                         .filter((i) => !!i.number);
                 } catch {
-                    // adminStore yoksa / hata varsa görmezden gel
                     mappedLocal = [];
                 }
 
@@ -115,10 +100,7 @@ export default function Header() {
                     if (!byNumber.has(it.number)) byNumber.set(it.number, it);
                 }
 
-                const finalList = Array.from(byNumber.values()).sort(
-                    (a, b) => b.number - a.number,
-                );
-
+                const finalList = Array.from(byNumber.values()).sort((a, b) => b.number - a.number);
                 setIssues(finalList);
             } catch {
                 setIssues([{ id: 'issue01', number: 1, title: 'Geceyle Konuşmak' }]);
@@ -137,25 +119,18 @@ export default function Header() {
     }, []);
 
     function gotoIssue(number: number) {
-        const href =
-            number === 1 ? '/issue01' : `/issues/${String(number).padStart(2, '0')}`;
+        const href = number === 1 ? '/issue01' : `/issues/${String(number).padStart(2, '0')}`;
         setOpen(false);
         router.push(href);
     }
 
-    // Header’da logout butonu olmayacak dedin; bu yüzden UI’da kullanmıyorum.
-    // İstersen kaldırabilirsin, istersen kalsın.
+    // ✅ Logout: NextAuth üzerinden
     async function logout() {
-        try {
-            await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-        } finally {
-            setUser(null);
-            window.location.assign('/');
-        }
+        await signOut({ callbackUrl: '/' });
     }
 
     const profileLabel =
-        (user as any)?.name || user?.name || user?.email?.split('@')[0] || 'Profil';
+        user?.name || user?.email?.split('@')[0] || 'Profil';
 
     return (
         <header className="w-full border-b border-white/10 bg-black/60 backdrop-blur sticky top-0 z-40">
@@ -170,7 +145,7 @@ export default function Header() {
           </span>
                 </Link>
 
-                {/* Sağ taraf: sayı seçici + linkler */}
+                {/* Sağ taraf */}
                 <div className="flex items-center gap-3">
                     {/* Sayı dropdown */}
                     <div className="relative" ref={ddRef}>
@@ -204,7 +179,7 @@ export default function Header() {
                                             </button>
                                         );
                                     })}
-                                    {/* Tüm sayılar */}
+
                                     <Link
                                         href="/issues"
                                         onClick={() => setOpen(false)}
@@ -227,7 +202,7 @@ export default function Header() {
                             </div>
                         )}
                     </div>
-                    
+
                     <Link
                         href="/authors/leon-varis"
                         className={`rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-black/30 hover:bg-white/10 transition ${
@@ -238,7 +213,11 @@ export default function Header() {
                     </Link>
 
                     {/* AUTH CTA / PROFILE */}
-                    {user ? (
+                    {status === 'loading' ? (
+                        <span className="rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/50 bg-black/30">
+              …
+            </span>
+                    ) : user ? (
                         <Link
                             href="/profile"
                             className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/85 bg-white/5 hover:bg-white/10 transition ${
