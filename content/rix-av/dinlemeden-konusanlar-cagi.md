@@ -3,7 +3,7 @@ title: "Dinlemeden Konuşanlar Çağı"
 excerpt: "Sözler artık yankılanmıyor, çarpışıyor. Rix Av çağın en gürültülü yerinde, sessizliğin anlamını arıyor."
 date: "2025-10-25"
 authorId: "rix-av"
-embedUrl: "https://www.youtube.com/watch?v=e5pGt1-Wy04&list=RDe5pGt1-Wy04&start_radio=1"
+embedUrl: "https://www.youtube.com/watch?v=talRDCCgN9Q&list=RDe5pGt1-Wy04&index=4"
 ---
 
 “Sözler artık yankılanmıyor, çarpışıyor.”

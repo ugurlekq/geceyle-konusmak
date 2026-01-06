@@ -34,5 +34,5 @@ Bir ilişkiyi taşıyan şey, söylenenler değil, söylenmeyenlerin güvenidir.
 Boşluk, insanın kendi derinliğiyle barıştığı yerdir.  
 Orada hiçbir şey olmaması değil, **her şeyin yerini bulması** vardır.  
 Ve bir an gelir, insan sessizliğin içinden şunu duyar:  
-“Eksik değilim… sadece taşmıyorum.”
+“Eksik değilim… sadece şu an taşmıyorum.”
 

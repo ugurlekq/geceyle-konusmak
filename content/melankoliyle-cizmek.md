@@ -45,4 +45,3 @@ Sanat, melankoliyi iyileştirmez; onunla birlikte yaşamanın üslubunu öğreti
 Ve üslup, iyileşmekten daha kalıcıdır.  
 Çünkü biçim bulmuş acı artık acı değildir; bilince dönüşmüştür.
 
-> **Son cümle:** Bir çizgi, bir kederi taşımaya razı olduğunda, o keder nihayet yerini bulur.
