@@ -28,7 +28,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     // ✅ Prod’da hata ayıklamak için (dev’de true, prod’da kapalı)
-    debug: process.env.NODE_ENV === "development",
+    debug: false,
 
     callbacks: {
         async jwt({ token, account, profile }) {

@@ -8,6 +8,8 @@ import { useSession } from 'next-auth/react';
 
 type IssueLite = { id: string; number: number; title?: string };
 
+// Vercel’de 0 yapınca auth akışını “under construction” moduna alıyoruz.
+// Localde .env.local: NEXT_PUBLIC_AUTH_ENABLED=1
 const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED !== '0';
 
 export default function Header() {
@@ -26,9 +28,11 @@ export default function Header() {
         return pathname.startsWith(href);
     }
 
-    useEffect(() => {
-        fetch('/api/visit', { method: 'POST', credentials: 'include' }).catch(() => {});
-    }, []);
+    // ✅ Visit’i şimdilik kapattık. (İstersen prod’da açarız)
+    // useEffect(() => {
+    //   if (process.env.NODE_ENV !== 'production') return;
+    //   fetch('/api/visit', { method: 'POST', credentials: 'include' }).catch(() => {});
+    // }, []);
 
     /* ------------- Sayı listesini API + adminStore’dan çek ------------- */
     useEffect(() => {
@@ -47,28 +51,31 @@ export default function Header() {
                 const mappedFromApi: IssueLite[] = apiItems.map((it) => ({
                     id: it.id ?? `issue-${it.number}`,
                     number: Number(it.number),
-                    title: typeof it.title === 'string' && it.title.trim().length > 0 ? it.title : undefined,
+                    title:
+                        typeof it.title === 'string' && it.title.trim().length > 0
+                            ? it.title.trim()
+                            : undefined,
                 }));
 
                 // 2) Admin panelden local (henüz publish edilmemiş) sayılar
                 let mappedLocal: IssueLite[] = [];
-                try {
-                    const mod = await import('@/lib/adminStore');
-                    const raw = (mod.getIssues?.() ?? []) as any[];
-                    mappedLocal = raw
-                        .map(
-                            (it): IssueLite => ({
+                if (AUTH_ENABLED) {
+                    try {
+                        const mod = await import('@/lib/adminStore');
+                        const raw = (mod.getIssues?.() ?? []) as any[];
+                        mappedLocal = raw
+                            .map((it): IssueLite => ({
                                 id: it.id ?? `local-${it.number}`,
                                 number: Number(it.number),
                                 title:
                                     typeof it.title === 'string' && it.title.trim().length > 0
                                         ? it.title.trim()
                                         : undefined,
-                            }),
-                        )
-                        .filter((i) => !!i.number);
-                } catch {
-                    mappedLocal = [];
+                            }))
+                            .filter((i) => !!i.number);
+                    } catch {
+                        mappedLocal = [];
+                    }
                 }
 
                 // 3) Sayı 01 garanti
@@ -83,8 +90,7 @@ export default function Header() {
                     if (!byNumber.has(it.number)) byNumber.set(it.number, it);
                 }
 
-                const finalList = Array.from(byNumber.values()).sort((a, b) => b.number - a.number);
-                setIssues(finalList);
+                setIssues(Array.from(byNumber.values()).sort((a, b) => b.number - a.number));
             } catch {
                 setIssues([{ id: 'issue01', number: 1, title: 'Geceyle Konuşmak' }]);
             }
@@ -109,6 +115,10 @@ export default function Header() {
 
     const profileLabel =
         user?.name || user?.email?.split('@')?.[0] || (status === 'loading' ? '...' : 'Profil');
+
+    // Auth kapalıysa (Vercel): iki buton da aynı login sayfasına gider → orada Under construction görür
+    const signinHref = AUTH_ENABLED ? '/login?mode=signin' : '/login?mode=signin';
+    const signupHref = AUTH_ENABLED ? '/login?mode=signup' : '/login?mode=signin';
 
     return (
         <header className="w-full border-b border-white/10 bg-black/60 backdrop-blur sticky top-0 z-40">
@@ -205,7 +215,7 @@ export default function Header() {
                     ) : (
                         <>
                             <Link
-                                href="/login?mode=signin"
+                                href={signinHref}
                                 className={`rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-black/30 hover:bg-white/10 transition ${
                                     isActive('/login') ? 'bg-white/10' : ''
                                 }`}
@@ -214,7 +224,7 @@ export default function Header() {
                             </Link>
 
                             <Link
-                                href="/login?mode=signup"
+                                href={signupHref}
                                 className="rounded-xl px-3 py-1.5 text-sm border border-amber-400/60 text-amber-200 bg-black/40 hover:bg-amber-400/10 transition"
                             >
                                 Sign up

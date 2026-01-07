@@ -8,8 +8,8 @@ type Props = {
 
 const AMOUNTS = [
     { label: " ☕1", amount: 1 },
-    { label: " ☕☕ 2.5", amount: 2.5 },
-    { label: " ☕☕☕ 5", amount: 5 },
+    { label: " ☕☕ 2", amount: 2 },
+    { label: " ☕☕☕ 3", amount: 3 },
 ];
 
 function safeBuildUrl(baseRaw: string, params: Record<string, string | undefined>) {
