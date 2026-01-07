@@ -4,27 +4,18 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 
 type IssueLite = { id: string; number: number; title?: string };
+
+const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED !== '0';
 
 export default function Header() {
     const router = useRouter();
     const pathname = router.asPath || '/';
 
-    // ✅ NextAuth session: /api/me fetch yok, state yok
     const { data: session, status } = useSession();
-
-    // session.user içine role ekliyorsun (authOptions callback’lerinden)
-    const u = (session?.user ?? null) as any | null;
-
-    const user = u?.email
-        ? {
-            email: u.email as string,
-            name: (u.name as string | undefined) ?? null,
-            role: (u.role as 'admin' | 'user' | undefined) ?? 'user',
-        }
-        : null;
+    const user = (session?.user ?? null) as any;
 
     const [issues, setIssues] = useState<IssueLite[]>([]);
     const [open, setOpen] = useState(false);
@@ -35,7 +26,6 @@ export default function Header() {
         return pathname.startsWith(href);
     }
 
-    // ziyaret sayacı kalsın
     useEffect(() => {
         fetch('/api/visit', { method: 'POST', credentials: 'include' }).catch(() => {});
     }, []);
@@ -54,13 +44,10 @@ export default function Header() {
                     apiItems = [];
                 }
 
-                let mappedFromApi: IssueLite[] = apiItems.map((it) => ({
+                const mappedFromApi: IssueLite[] = apiItems.map((it) => ({
                     id: it.id ?? `issue-${it.number}`,
                     number: Number(it.number),
-                    title:
-                        typeof it.title === 'string' && it.title.trim().length > 0
-                            ? it.title
-                            : undefined,
+                    title: typeof it.title === 'string' && it.title.trim().length > 0 ? it.title : undefined,
                 }));
 
                 // 2) Admin panelden local (henüz publish edilmemiş) sayılar
@@ -84,16 +71,12 @@ export default function Header() {
                     mappedLocal = [];
                 }
 
-                // 3) Sayı 01 API’den de gelse, gelmese de mutlaka olsun
+                // 3) Sayı 01 garanti
                 if (!mappedFromApi.some((i) => i.number === 1)) {
-                    mappedFromApi.push({
-                        id: 'issue01',
-                        number: 1,
-                        title: 'Geceyle Konuşmak',
-                    });
+                    mappedFromApi.push({ id: 'issue01', number: 1, title: 'Geceyle Konuşmak' });
                 }
 
-                // 4) API + local -> number bazlı tekilleştir ve sırala
+                // 4) Tekilleştir + sırala
                 const byNumber = new Map<number, IssueLite>();
                 for (const it of [...mappedFromApi, ...mappedLocal]) {
                     if (!it.number) continue;
@@ -124,25 +107,18 @@ export default function Header() {
         router.push(href);
     }
 
-    // ✅ Logout: NextAuth üzerinden
-    async function logout() {
-        await signOut({ callbackUrl: '/' });
-    }
-
     const profileLabel =
-        user?.name || user?.email?.split('@')[0] || 'Profil';
+        user?.name || user?.email?.split('@')?.[0] || (status === 'loading' ? '...' : 'Profil');
 
     return (
         <header className="w-full border-b border-white/10 bg-black/60 backdrop-blur sticky top-0 z-40">
             <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
-                {/* Sol taraf: logo / başlık */}
+                {/* Sol taraf */}
                 <Link href="/" className="flex items-baseline gap-2">
           <span className="text-amber-400 text-xl md:text-2xl font-semibold tracking-wide">
             Geceyle Konuşmak
           </span>
-                    <span className="text-xs md:text-sm text-white/50">
-            — Yaşayan Metinler
-          </span>
+                    <span className="text-xs md:text-sm text-white/50">— Yaşayan Metinler</span>
                 </Link>
 
                 {/* Sağ taraf */}
@@ -212,18 +188,14 @@ export default function Header() {
                         Yazarlar
                     </Link>
 
-                    {/* AUTH CTA / PROFILE */}
-                    {status === 'loading' ? (
-                        <span className="rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/50 bg-black/30">
-              …
-            </span>
-                    ) : user ? (
+                    {/* AUTH / PROFILE */}
+                    {session?.user ? (
                         <Link
                             href="/profile"
                             className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/85 bg-white/5 hover:bg-white/10 transition ${
                                 pathname.startsWith('/profile') ? 'bg-white/10' : ''
                             }`}
-                            title={user.email}
+                            title={user?.email || ''}
                         >
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-200 text-[11px]">
                 ●
@@ -247,6 +219,10 @@ export default function Header() {
                             >
                                 Sign up
                             </Link>
+
+                            {!AUTH_ENABLED && (
+                                <span className="hidden md:inline text-xs text-white/40">Auth: kapalı</span>
+                            )}
                         </>
                     )}
                 </div>
