@@ -121,18 +121,23 @@ export default function Header() {
     const signupHref = AUTH_ENABLED ? '/login?mode=signup' : '/login?mode=signin';
 
     return (
-        <header className="w-full border-b border-white/10 bg-black/60 backdrop-blur sticky top-0 z-40">
-            <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3 gap-4">
+        <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur overflow-x-hidden">
+            <div className="mx-auto w-full max-w-5xl px-3 sm:px-4">
+                <div className="flex items-center justify-between gap-2 py-3 min-w-0">
                 {/* Sol taraf */}
-                <Link href="/" className="flex items-baseline gap-2">
-          <span className="text-amber-400 text-xl md:text-2xl font-semibold tracking-wide">
-            Geceyle Konuşmak
-          </span>
-                    <span className="text-xs md:text-sm text-white/50">— Yaşayan Metinler</span>
-                </Link>
+                    <Link href="/" className="flex items-baseline gap-2 min-w-0">
+                      <span className="text-amber-400 text-lg sm:text-xl md:text-2xl font-semibold tracking-wide truncate">
+                        Geceyle Konuşmak
+                      </span>
+                                            <span className="hidden sm:inline text-xs md:text-sm text-white/50 whitespace-nowrap">
+                        — Yaşayan Metinler
+                      </span>
+                    </Link>
 
-                {/* Sağ taraf */}
-                <div className="flex items-center gap-3">
+
+                    {/* Sağ taraf */}
+                    <div className="flex items-center gap-2 shrink-0">
+
                     {/* Sayı dropdown */}
                     <div className="relative" ref={ddRef}>
                         <button
@@ -141,7 +146,7 @@ export default function Header() {
                                 e.stopPropagation();
                                 setOpen((o) => !o);
                             }}
-                            className="inline-flex items-center gap-1 rounded-xl border border-amber-400/60 px-3 py-1.5 text-sm text-amber-200 bg-black/40 hover:bg-amber-400/10 transition"
+                            className="inline-flex items-center gap-1 rounded-xl border border-amber-400/60 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-amber-200 bg-black/40 hover:bg-amber-400/10 transition whitespace-nowrap"
                         >
                             Sayılar <span className="text-xs opacity-80">▼</span>
                         </button>
@@ -191,9 +196,10 @@ export default function Header() {
 
                     <Link
                         href="/authors/leon-varis"
-                        className={`rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/80 bg-black/30 hover:bg-white/10 transition ${
+                        className={`rounded-xl px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-white/14 text-white/80 bg-black/30 hover:bg-white/10 transition whitespace-nowrap ${
                             isActive('/authors/leon-varis') ? 'bg-white/10' : ''
                         }`}
+
                     >
                         Yazarlar
                     </Link>
@@ -225,7 +231,7 @@ export default function Header() {
 
                             <Link
                                 href={signupHref}
-                                className="rounded-xl px-3 py-1.5 text-sm border border-amber-400/60 text-amber-200 bg-black/40 hover:bg-amber-400/10 transition"
+                                className="hidden sm:inline rounded-xl px-3 py-1.5 text-sm border border-amber-400/60 text-amber-200 bg-black/40 hover:bg-amber-400/10 transition"
                             >
                                 Sign up
                             </Link>
@@ -236,6 +242,7 @@ export default function Header() {
                         </>
                     )}
                 </div>
+            </div>
             </div>
         </header>
     );
