@@ -121,8 +121,8 @@ export default function Header() {
     const signupHref = AUTH_ENABLED ? '/login?mode=signup' : '/login?mode=signin';
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur overflow-x-hidden">
-            <div className="mx-auto w-full max-w-5xl px-3 sm:px-4">
+        <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur">
+        <div className="mx-auto w-full max-w-5xl px-3 sm:px-4">
                 <div className="flex items-center justify-between gap-2 py-3 min-w-0">
                 {/* Sol taraf */}
                     <Link href="/" className="flex items-baseline gap-2 min-w-0">
@@ -152,7 +152,7 @@ export default function Header() {
                         </button>
 
                         {open && (
-                            <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/10 bg-black/95 shadow-xl overflow-hidden">
+                            <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-white/10 bg-black/95 shadow-xl overflow-hidden z-50">
                                 <div className="max-h-80 overflow-y-auto py-1">
                                     {issues.map((i) => {
                                         const label = i.title
