@@ -10,7 +10,6 @@ type IssueLite = { id: string; number: number; title?: string };
 
 // Vercel’de 0 yapınca auth akışını “under construction” moduna alıyoruz.
 // Localde .env.local: NEXT_PUBLIC_AUTH_ENABLED=1
-const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED !== '0';
 
 export default function Header() {
     const router = useRouter();
@@ -38,17 +37,12 @@ export default function Header() {
     useEffect(() => {
         (async () => {
             try {
-                // 1) API’den yayınlanmış sayılar
-                let apiItems: any[] = [];
-                try {
-                    const r = await fetch('/api/content/issues', { cache: 'no-store' });
-                    const d = await r.json();
-                    apiItems = Array.isArray(d?.items) ? (d.items as any[]) : [];
-                } catch {
-                    apiItems = [];
-                }
+                const r = await fetch('/api/content/issues', { cache: 'no-store' });
+                const d = await r.json();
 
-                const mappedFromApi: IssueLite[] = apiItems.map((it) => ({
+                const apiItems = Array.isArray(d?.items) ? d.items : [];
+
+                const mapped: IssueLite[] = apiItems.map((it: any) => ({
                     id: it.id ?? `issue-${it.number}`,
                     number: Number(it.number),
                     title:
@@ -57,45 +51,23 @@ export default function Header() {
                             : undefined,
                 }));
 
-                // 2) Admin panelden local (henüz publish edilmemiş) sayılar
-                let mappedLocal: IssueLite[] = [];
-                if (AUTH_ENABLED) {
-                    try {
-                        const mod = await import('@/lib/adminStore');
-                        const raw = (mod.getIssues?.() ?? []) as any[];
-                        mappedLocal = raw
-                            .map((it): IssueLite => ({
-                                id: it.id ?? `local-${it.number}`,
-                                number: Number(it.number),
-                                title:
-                                    typeof it.title === 'string' && it.title.trim().length > 0
-                                        ? it.title.trim()
-                                        : undefined,
-                            }))
-                            .filter((i) => !!i.number);
-                    } catch {
-                        mappedLocal = [];
-                    }
+                // Sayı 01 garanti
+                if (!mapped.some((i) => i.number === 1)) {
+                    mapped.push({
+                        id: 'issue01',
+                        number: 1,
+                        title: 'Geceyle Konuşmak',
+                    });
                 }
 
-                // 3) Sayı 01 garanti
-                if (!mappedFromApi.some((i) => i.number === 1)) {
-                    mappedFromApi.push({ id: 'issue01', number: 1, title: 'Geceyle Konuşmak' });
-                }
-
-                // 4) Tekilleştir + sırala
-                const byNumber = new Map<number, IssueLite>();
-                for (const it of [...mappedFromApi, ...mappedLocal]) {
-                    if (!it.number) continue;
-                    if (!byNumber.has(it.number)) byNumber.set(it.number, it);
-                }
-
-                setIssues(Array.from(byNumber.values()).sort((a, b) => b.number - a.number));
+                // büyükten küçüğe sırala
+                setIssues(mapped.sort((a, b) => b.number - a.number));
             } catch {
                 setIssues([{ id: 'issue01', number: 1, title: 'Geceyle Konuşmak' }]);
             }
         })();
     }, []);
+
 
     /* ------------- Dropdown dışında tıklanınca kapat ------------- */
     useEffect(() => {
@@ -117,8 +89,9 @@ export default function Header() {
         user?.name || user?.email?.split('@')?.[0] || (status === 'loading' ? '...' : 'Profil');
 
     // Auth kapalıysa (Vercel): iki buton da aynı login sayfasına gider → orada Under construction görür
-    const signinHref = AUTH_ENABLED ? '/login?mode=signin' : '/login?mode=signin';
-    const signupHref = AUTH_ENABLED ? '/login?mode=signup' : '/login?mode=signin';
+    const signinHref = '/login?mode=signin';
+    const signupHref = '/login?mode=signup';
+    
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur">
@@ -236,9 +209,6 @@ export default function Header() {
                                 Sign up
                             </Link>
 
-                            {!AUTH_ENABLED && (
-                                <span className="hidden md:inline text-xs text-white/40">Auth: kapalı</span>
-                            )}
                         </>
                     )}
                 </div>
