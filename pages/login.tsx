@@ -5,6 +5,13 @@ import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 
 const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED !== '0';
+const IS_LOCAL =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+// AUTH_ENABLED env’i koru ama localde daima true say
+const AUTH_OK = IS_LOCAL ? true : AUTH_ENABLED;
+
 
 export default function LoginPage() {
     const router = useRouter();
@@ -23,7 +30,8 @@ export default function LoginPage() {
     }
 
     // PROD/Vercel'de auth kapalı: signin + signup aynı şekilde under construction
-    if (!AUTH_ENABLED) {
+    if (!AUTH_OK)
+        {
         return (
             <div className="min-h-screen flex items-center justify-center px-4">
                 <div className="max-w-sm w-full rounded-2xl border border-white/10 bg-black/70 p-6">

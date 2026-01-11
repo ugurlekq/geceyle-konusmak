@@ -7,6 +7,7 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 
 type IssueLite = { id: string; number: number; title?: string };
+const AUTH_ENABLED = process.env.NEXT_PUBLIC_AUTH_ENABLED !== '0';
 
 // Vercel’de 0 yapınca auth akışını “under construction” moduna alıyoruz.
 // Localde .env.local: NEXT_PUBLIC_AUTH_ENABLED=1
@@ -88,10 +89,12 @@ export default function Header() {
     const profileLabel =
         user?.name || user?.email?.split('@')?.[0] || (status === 'loading' ? '...' : 'Profil');
 
-    // Auth kapalıysa (Vercel): iki buton da aynı login sayfasına gider → orada Under construction görür
-    const signinHref = '/login?mode=signin';
-    const signupHref = '/login?mode=signup';
-    
+    const UC_HREF = '/under-construction';
+
+    const signinHref = AUTH_ENABLED ? '/login?mode=signin' : UC_HREF;
+    const signupHref = AUTH_ENABLED ? '/login?mode=signup' : UC_HREF;
+
+
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/60 backdrop-blur">
@@ -178,7 +181,7 @@ export default function Header() {
                     </Link>
 
                     {/* AUTH / PROFILE */}
-                    {session?.user ? (
+                    {session?.user && AUTH_ENABLED ? (
                         <Link
                             href="/profile"
                             className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm border border-white/14 text-white/85 bg-white/5 hover:bg-white/10 transition ${
