@@ -56,20 +56,19 @@ export default function IssuesPage() {
 
                     <div className="mt-4 flex gap-3 flex-wrap text-sm">
                         <Link
-                            href="/issue01"
+                            href="/"
                             className="rounded-xl px-3.5 py-2 border border-amber-400/70 text-amber-300 bg-black/30 hover:bg-amber-400 hover:text-black transition"
                         >
-                           Anasayfaya Dön
+                            Anasayfaya Dön
                         </Link>
-                        
                     </div>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="grid gap-5 md:grid-cols-2 items-stretch">
                     {ISSUES.map((iss) => (
                         <div
                             key={iss.number}
-                            className="rounded-2xl border border-white/10 bg-white/5 p-6"
+                            className="rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col min-h-[260px]"
                         >
                             <div className="text-white/50 text-sm">
                                 Sayı {String(iss.number).padStart(2, "0")}
@@ -83,20 +82,13 @@ export default function IssuesPage() {
                                 {iss.description}
                             </p>
 
-                            <div className="mt-5 flex items-center gap-3">
+                            <div className="mt-auto pt-5 flex items-center gap-3">
                                 <Link
                                     href={iss.href}
                                     className="inline-flex items-center rounded-xl border border-amber-400/70 text-amber-300 px-4 py-2 hover:bg-amber-400 hover:text-black transition text-sm"
                                 >
                                     Sayıya git →
                                 </Link>
-
-                                {/* küçük yönlendirme: sırayla okuma fikri */}
-                                {iss.number !== 1 && (
-                                    <span className="text-xs text-white/40">
-                    Öneri: Sayı 01’den sonra
-                  </span>
-                                )}
                             </div>
                         </div>
                     ))}

@@ -1,4 +1,5 @@
 ﻿// pages/authors/[id].tsx
+import Header from '@/components/Header';
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -91,6 +92,9 @@ export default function AuthorPage({ author, articles, allAuthors }: Props) {
         `/images/authors/${author.id}.jpg`; // istersen bu yolu değiştirebilirsin
 
     return (
+        <>
+        <Header />
+            
         <div className="min-h-screen px-6 py-10 md:py-14 max-w-5xl mx-auto">
             {/* Üst navigasyon + yazar seçimi */}
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -290,6 +294,7 @@ export default function AuthorPage({ author, articles, allAuthors }: Props) {
                 </>
             )}
         </div>
+    </>
     );
 }
 

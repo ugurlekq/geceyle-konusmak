@@ -1,11 +1,13 @@
 ﻿// /pages/articles/[...slug].tsx
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
-import {Component, useEffect, useMemo, useRef, useState} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { marked } from "marked";
 
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import SupportThisText from "@/components/SupportThisText";
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
@@ -59,16 +61,12 @@ export default function ArticlePage({
     const router = useRouter();
     const [rt, setRt] = useState<RuntimeArticle | null>(null);
 
-    // ✅ Sayfanın gerçek slug'ı (full path)
-    const slugParts = ((router.query.slug as string[]) || []).filter(Boolean);
-
     // ✅ Stabil slug
     const pageSlug = useMemo(() => {
         if (!router.isReady) return "";
         const parts = (router.query.slug as string[] | undefined) ?? [];
         return parts.filter(Boolean).join("/");
     }, [router.isReady, router.query.slug]);
-
 
     // ✅ Meta state (tek kaynaktan)
     const [likeCount, setLikeCount] = useState<number>(0);
@@ -96,7 +94,8 @@ export default function ArticlePage({
         let v = localStorage.getItem(k);
         if (!v) {
             v =
-                (crypto?.randomUUID?.() || Math.random().toString(36).slice(2)) +
+                ((globalThis.crypto as any)?.randomUUID?.() ||
+                    Math.random().toString(36).slice(2)) +
                 "-" +
                 Date.now();
             localStorage.setItem(k, v);
@@ -131,6 +130,7 @@ export default function ArticlePage({
             setLoadingMeta(false);
         }
     }
+
     useEffect(() => {
         if (!router.isReady) return;
         if (!pageSlug) return;
@@ -140,9 +140,13 @@ export default function ArticlePage({
         return () => ac.abort();
     }, [router.isReady, pageSlug]);
 
-
+    // ✅ visit (istersen sadece prod’da)
     useEffect(() => {
         if (!pageSlug) return;
+
+        // İstersen localde kapalı kalsın:
+        // if (process.env.NODE_ENV !== "production") return;
+
         fetch("/api/visit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -262,6 +266,12 @@ export default function ArticlePage({
             ? `/issues/${String(finalIssueNo).padStart(2, "0")}`
             : "/issue01";
 
+    const issueLabel =
+        finalIssueNo && finalIssueNo > 1
+            ? `Sayı ${String(finalIssueNo).padStart(2, "0")}`
+            : "Sayı 01";
+
+
     const embed = finalEmbed ? toEmbed(finalEmbed) : null;
 
     const showLoading = !html && !rt;
@@ -281,154 +291,196 @@ export default function ArticlePage({
                 <title>{finalTitle}</title>
             </Head>
 
-            <ArticleLayout title={finalTitle}>
-                {/* Meta satırı: yazar + sayı + tarih */}
-                {(author || finalIssueNo || formattedDate) && (
-                    <div className="text-sm text-white/60 mb-6">
-                        {author && <span>{author.name}</span>}
-                        {finalIssueNo && (
-                            <span>
-                {author ? " • " : ""}
-                                Sayı {finalIssueNo}
-              </span>
-                        )}
-                        {formattedDate && (
-                            <span>
-                {author || finalIssueNo ? " • " : ""}
-                                {formattedDate}
-              </span>
-                        )}
-                    </div>
-                )}
+            {/* ✅ Site çerçevesi: Header + Footer */}
+            <div className="min-h-screen bg-black text-white flex flex-col">
+                <Header />
 
-                {/* Embed / audio bloğu */}
-                {(embed || finalAudio) && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 1.2 }}
-                    >
-                        <div className="mb-10 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
-                            {embed ? (
-                                <iframe
-                                    src={embed.src}
-                                    width="100%"
-                                    height={embed.height}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowFullScreen
-                                    className="rounded-2xl"
-                                    title={`${finalTitle} — embed`}
-                                />
-                            ) : (
-                                <div className="p-4">
-                                    <audio
-                                        src={finalAudio!}
-                                        controls
-                                        className="w-full rounded-lg bg-black/30"
-                                    />
+                <main className="flex-1">
+                    {/* ✅ Breadcrumb */}
+                    <div className="max-w-5xl mx-auto px-6 pt-6">
+                        <nav className="text-xs md:text-sm text-white/55 flex flex-wrap items-center gap-2">
+                            <a
+                                href={issueHref}
+                                className="hover:text-amber-300 transition"
+                            >
+                                {issueLabel}
+                            </a>
+
+                            <span className="text-white/25">→</span>
+
+                            {author ? (
+                                <>
+                                    <a
+                                        href={`/authors/${author.id}`}
+                                        className="hover:text-amber-300 transition"
+                                    >
+                                        {safeText(author.name)}
+                                    </a>
+
+                                    <span className="text-white/25">→</span>
+                                </>
+                            ) : null}
+
+                            <span className="text-white/80">{safeText(finalTitle)}</span>
+                        </nav>
+                    </div>
+
+                    <ArticleLayout title={finalTitle}>
+                        {/* Meta satırı: yazar + sayı + tarih */}
+                        {(author || finalIssueNo || formattedDate) && (
+                            <div className="text-sm text-white/60 mb-6">
+                                {author && <span>{author.name}</span>}
+                                {finalIssueNo && (
+                                    <span>
+                    {author ? " • " : ""}
+                                        Sayı {finalIssueNo}
+                  </span>
+                                )}
+                                {formattedDate && (
+                                    <span>
+                    {author || finalIssueNo ? " • " : ""}
+                                        {formattedDate}
+                  </span>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Embed / audio bloğu */}
+                        {(embed || finalAudio) && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 1.2 }}
+                            >
+                                <div className="mb-10 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
+                                    {embed ? (
+                                        <iframe
+                                            src={embed.src}
+                                            width="100%"
+                                            height={embed.height}
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            allowFullScreen
+                                            className="rounded-2xl"
+                                            title={`${finalTitle} — embed`}
+                                        />
+                                    ) : (
+                                        <div className="p-4">
+                                            <audio
+                                                src={finalAudio!}
+                                                controls
+                                                className="w-full rounded-lg bg-black/30"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
+                            </motion.div>
+                        )}
 
-                {/* İçerik */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 1.2 }}
-                >
-                    {html ? (
-                        <div
-                            className="prose prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: html }}
-                        />
-                    ) : rt?.body ? (
-                        <div className="prose prose-invert max-w-none">
-                            <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
-                                {rt.body}
-                            </p>
-                        </div>
-                    ) : showLoading ? (
-                        <p className="text-white/60">Yükleniyor…</p>
-                    ) : (
-                        <p className="text-white/60">Bu yazı bulunamadı.</p>
-                    )}
-                </motion.div>
-
-                <div className="mt-10 border-t border-white/10 pt-8">
-                    <SupportThisText slug={pageSlug} title={finalTitle} />
-                </div>
-                
-                {/* ✅ Like + Comments */}
-                <div className="mt-10 border-t border-white/10 pt-8">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={sendLike}
-                            disabled={!pageSlug || liking}
-                            className="px-4 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition"
+                        {/* İçerik */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 1.2 }}
                         >
-                            {liking ? "Beğeniliyor…" : "❤️ Beğen"}
-                        </button>
+                            {html ? (
+                                <div
+                                    className="prose prose-invert max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: html }}
+                                />
+                            ) : rt?.body ? (
+                                <div className="prose prose-invert max-w-none">
+                                    <p className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                                        {rt.body}
+                                    </p>
+                                </div>
+                            ) : showLoading ? (
+                                <p className="text-white/60">Yükleniyor…</p>
+                            ) : (
+                                <p className="text-white/60">Bu yazı bulunamadı.</p>
+                            )}
+                        </motion.div>
 
-                        <div className="text-white/70 text-sm">{likeCount} beğeni</div>
-                        {loadingMeta && <div className="text-white/40 text-xs">senkron…</div>}
-                    </div>
+                        <div className="mt-10 border-t border-white/10 pt-8">
+                            <SupportThisText slug={pageSlug} title={finalTitle} />
+                        </div>
 
-                    <div className="mt-8">
-                        <div className="text-white/80 font-semibold mb-3">Yorumlar</div>
-
-                        {/* Composer */}
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-6">
-              <textarea
-                  ref={taRef}
-                  rows={1}
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onInput={autoGrowTextarea}
-                  className="w-full bg-transparent outline-none text-white/90 resize-none whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
-                  style={{ overflow: "hidden" }}
-              />
-
-                            <div className="mt-3 flex justify-end">
+                        {/* ✅ Like + Comments */}
+                        <div className="mt-10 border-t border-white/10 pt-8">
+                            <div className="flex items-center gap-4">
                                 <button
-                                    onClick={sendComment}
-                                    disabled={!pageSlug || commenting || !commentText.trim()}
-                                    className="px-4 py-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 transition"
+                                    onClick={sendLike}
+                                    disabled={!pageSlug || liking}
+                                    className="px-4 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition"
                                 >
-                                    {commenting ? "Gönderiliyor…" : "Yorum gönder"}
+                                    {liking ? "Beğeniliyor…" : "❤️ Beğen"}
                                 </button>
+
+                                <div className="text-white/70 text-sm">{likeCount} beğeni</div>
+                                {loadingMeta && (
+                                    <div className="text-white/40 text-xs">senkron…</div>
+                                )}
+                            </div>
+
+                            <div className="mt-8">
+                                <div className="text-white/80 font-semibold mb-3">Yorumlar</div>
+
+                                {/* Composer */}
+                                <div className="rounded-xl border border-white/10 bg-white/5 p-4 mb-6">
+                  <textarea
+                      ref={taRef}
+                      rows={1}
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      onInput={autoGrowTextarea}
+                      className="w-full bg-transparent outline-none text-white/90 resize-none whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+                      style={{ overflow: "hidden" }}
+                  />
+
+                                    <div className="mt-3 flex justify-end">
+                                        <button
+                                            onClick={sendComment}
+                                            disabled={!pageSlug || commenting || !commentText.trim()}
+                                            className="px-4 py-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 transition"
+                                        >
+                                            {commenting ? "Gönderiliyor…" : "Yorum gönder"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Liste */}
+                                <div className="space-y-3">
+                                    {comments.length === 0 ? (
+                                        <div className="text-white/50 text-sm">
+                                            Henüz yorum yok.
+                                        </div>
+                                    ) : (
+                                        comments.map((c) => (
+                                            <div
+                                                key={c.id}
+                                                className="rounded-xl border border-white/10 bg-white/5 p-4"
+                                            >
+                                                <div className="text-white/90 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                    {c.content}
+                                                </div>
+                                                <div className="text-white/40 text-xs mt-2">
+                                                    {new Date(c.created_at).toLocaleString("tr-TR")}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Liste */}
-                        <div className="space-y-3">
-                            {comments.length === 0 ? (
-                                <div className="text-white/50 text-sm">Henüz yorum yok.</div>
-                            ) : (
-                                comments.map((c) => (
-                                    <div
-                                        key={c.id}
-                                        className="rounded-xl border border-white/10 bg-white/5 p-4"
-                                    >
-                                        <div className="text-white/90 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                                            {c.content}
-                                        </div>
-                                        <div className="text-white/40 text-xs mt-2">
-                                            {new Date(c.created_at).toLocaleString("tr-TR")}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                        {/* Sayfaya geri link */}
+                        <div className="mt-10">
+                            <BackLink href={issueHref} label="← Sayıya Dön" />
                         </div>
-                    </div>
-                </div>
+                    </ArticleLayout>
+                </main>
 
-                {/* Sayfaya geri link */}
-                <div className="mt-10">
-                    <BackLink href={issueHref} label="← Sayıya Dön" />
-                </div>
-            </ArticleLayout>
+                <Footer />
+            </div>
         </>
     );
 }
@@ -495,6 +547,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
         fallback: "blocking",
     };
 };
+function safeText(s: string) {
+    return (s || "").replace(/\s+/g, " ").trim();
+}
 
 export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
     const slugParts = ((params?.slug as string[]) || []).filter(Boolean);
