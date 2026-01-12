@@ -12,7 +12,6 @@ export default function UnderConstruction() {
             <main className="mx-auto max-w-3xl px-6 pt-20 pb-24">
                 <h1 className="text-3xl font-semibold text-amber-300">Under Construction</h1>
                 <p className="mt-4 text-white/70 leading-relaxed">
-                    Giriş sistemi şu an sadece local geliştirme ortamında açık.
                     Canlı sitede (prod) bu bölüm geçici olarak kapalı.
                 </p>
 

@@ -38,7 +38,6 @@ export default function LoginPage() {
                     <h1 className="text-xl text-amber-300 font-semibold mb-3">Under construction</h1>
                     <p className="text-sm text-white/70 mb-6">
                         Giriş/Kayıt akışı production’da şimdilik kapalı.
-                        Local’de admin işlemleri için açık.
                     </p>
 
                     {err && (
