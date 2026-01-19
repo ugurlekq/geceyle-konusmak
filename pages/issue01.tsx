@@ -1,11 +1,13 @@
-// pages/issue01.tsx
+// /pages/issue01.tsx
 import type { GetStaticProps } from "next";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import BackLink from "../components/BackLink";
-import { authors } from "../data/authors";
-import Footer from "../components/Footer";
+
+import Header from "@/components/Header"; // ✅ EKLENDİ
+import BackLink from "@/components/BackLink";
+import { authors } from "@/data/authors";
+import Footer from "@/components/Footer";
 
 type ArticleCard = {
     slug: string;
@@ -30,7 +32,6 @@ const ISSUE01_DESC_FALLBACK =
 
 export default function Issue01({ articles = [] }: Props) {
     const [dyn, setDyn] = useState<ArticleCard[]>([]);
-    // ✅ state ilk değer: fallback
     const [issueDesc, setIssueDesc] = useState<string>(ISSUE01_DESC_FALLBACK);
 
     useEffect(() => {
@@ -49,57 +50,36 @@ export default function Issue01({ articles = [] }: Props) {
                         authorId: a.authorId ?? null,
                         hasMedia: !!(a.embedUrl || a.audioUrl),
                         date: a.date ?? null,
-                        issueNumber: Number(a.issueNumber) || 1,
+                        issueNumber: 1,
                     })) as ArticleCard[];
 
                 setDyn(mine);
 
-                // Sayı 01 açıklamasını adminStore'dan çek (varsa override et)
+                // Sayı 01 açıklamasını adminStore'dan override et (varsa)
                 let desc: string | null = null;
 
-                if (typeof (mod as any).getIssueDescription === "function") {
-                    desc = (mod as any).getIssueDescription(1) ?? null;
-                }
-
-                if (!desc && typeof (mod as any).getIssueMeta === "function") {
-                    const meta = (mod as any).getIssueMeta(1);
-                    if (meta) {
-                        if (typeof meta.description === "string") desc = meta.description;
-                        else if (typeof meta.summary === "string") desc = meta.summary;
-                        else if (typeof (meta as any).ozet === "string") desc = (meta as any).ozet;
-                    }
-                }
-
-                if (!desc && typeof (mod as any).getIssues === "function") {
+                if (typeof (mod as any).getIssues === "function") {
                     const all = (mod as any).getIssues() ?? [];
-                    const found = all.find((it: any) => {
-                        const n = Number(it.issueNumber) || Number(it.no) || Number(it.id);
-                        return n === 1;
-                    });
-                    if (found) {
-                        if (typeof found.description === "string") desc = found.description;
-                        else if (typeof found.summary === "string") desc = found.summary;
-                        else if (typeof (found as any).ozet === "string") desc = (found as any).ozet;
-                    }
+                    const found = all.find((it: any) => Number(it.number) === 1);
+                    if (found?.description) desc = found.description;
                 }
 
-                if (desc && desc.trim().length > 0) {
-                    setIssueDesc(desc.trim());
-                }
+                if (desc?.trim()) setIssueDesc(desc.trim());
             } catch {
-                // sessiz
+                // sessiz geç
             }
         })();
     }, []);
 
     const list = [...articles, ...dyn]
         .filter((x) => (x.issueNumber ?? 1) === 1)
-        .filter((x) => !x.slug?.startsWith("articles/"))
         .sort((a, b) => (Date.parse(b.date || "") || 0) - (Date.parse(a.date || "") || 0));
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <main className="flex-1 px-6 py-12 max-w-4xl mx-auto">
+        <div className="min-h-screen flex flex-col bg-black text-white">
+            <Header /> {/* ✅ ARTIK BURADA */}
+
+            <main className="flex-1 px-6 py-12 max-w-5xl mx-auto w-full">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -113,8 +93,7 @@ export default function Issue01({ articles = [] }: Props) {
                         İlk Gece
                     </h2>
 
-                    {/* ✅ artık her durumda görünür */}
-                    <p className="candle-flicker text-white/80 mt-3 leading-relaxed">
+                    <p className="text-white/80 mt-3 leading-relaxed">
                         {issueDesc}
                     </p>
 
@@ -125,19 +104,18 @@ export default function Issue01({ articles = [] }: Props) {
                     <h3 className="mt-14 text-2xl md:text-3xl text-amber-300">
                         Bu sayıya ait yazılar
                     </h3>
-
-
-
                 </motion.div>
 
                 {list.length === 0 ? (
-                    <p className="mt-10 text-white/60">Bu sayıya ait yazı bulunamadı.</p>
+                    <p className="mt-10 text-white/60">
+                        Bu sayıya ait yazı bulunamadı.
+                    </p>
                 ) : (
                     <div className="mt-10 space-y-8">
                         {list.map((a, i) => {
-                            const aAuthor = a.authorId ? AUTHORS[a.authorId] : undefined;
-                            const badgeColor = aAuthor?.color ?? "#9ca3af";
-                            const authorName = aAuthor?.name ?? "Bilinmeyen Yazar";
+                            const A = a.authorId ? AUTHORS[a.authorId] : undefined;
+                            const badgeColor = A?.color ?? "#9ca3af";
+                            const authorName = A?.name ?? "Bilinmeyen Yazar";
 
                             return (
                                 <motion.div
@@ -150,20 +128,24 @@ export default function Issue01({ articles = [] }: Props) {
                                         href={`/articles/${a.slug}`}
                                         className="block rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition px-6 py-5"
                                     >
-                                        <div className="text-2xl text-amber-300">{a.title}</div>
+                                        <div className="text-2xl text-amber-300">
+                                            {a.title}
+                                        </div>
 
-                                        {a.excerpt ? (
-                                            <p className="text-white/70 mt-1">{a.excerpt}</p>
-                                        ) : null}
+                                        {a.excerpt && (
+                                            <p className="text-white/70 mt-1">
+                                                {a.excerpt}
+                                            </p>
+                                        )}
 
                                         <div className="mt-2 flex items-center gap-2 text-sm text-white/60">
-                      <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ background: badgeColor }}
-                      />
+                                            <span
+                                                className="inline-block h-2.5 w-2.5 rounded-full"
+                                                style={{ background: badgeColor }}
+                                            />
                                             <span>{authorName}</span>
                                             {a.hasMedia && (
-                                                <span className="opacity-75 ml-1" title="Müzik/Video var">🎧</span>
+                                                <span className="opacity-75 ml-1">🎧</span>
                                             )}
                                         </div>
                                     </Link>
@@ -193,7 +175,7 @@ export const getStaticProps: GetStaticProps<Props> = async () => {
                 authorId: a.authorId ?? null,
                 hasMedia: !!(a.embedUrl || a.audioUrl),
                 date: a.date ?? null,
-                issueNumber: Number(a.issueNumber) || 1,
+                issueNumber: 1,
             })) as ArticleCard[];
 
         return { props: { articles: onlyIssue1 } };

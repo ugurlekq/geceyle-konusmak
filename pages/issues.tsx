@@ -39,6 +39,13 @@ const ISSUES: IssueCard[] = [
         description:
             "Sürekli tetikte yaşamanın çağında, insanın kendi temposunu hatırlamasına dair bir yeniden bağlanma çağrısı.",
     },
+    {
+        number: 5,
+        title: "Algıların Dünyası",
+        href: "/issues/05",
+        description:
+            "Algı, çoğu zaman düşünceden önce çalışır. Ne gördüğümüzü değil, neyi görmeye değer bulduğumuzu seçer. Bu sayıda metinler, algının nasıl kurulduğunu ve hangi anlarda düşüncenin yerini aldığını takip eder.",
+    }
 ];
 
 export default function IssuesPage() {

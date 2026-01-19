@@ -17,7 +17,7 @@ export const authors: Author[] = [
         handle: "@leon",
         color: "#f9b64c",
         tagline: "Melankoli ve estetik arasında yürüyen bir kalem.",
-        bio: "Melankoliyi bir kusur değil, biçim verme çağrısı olarak görür. Yazarken çizgi gibi davranır; sözcükleri ağır ağır koyar, gölgenin hangi biçimde görünür olduğuyla ilgilenir. Varlık, sessizlik ve estetik üçgeninde dolaşır.",
+        bio: "Melankoli, gündelik estetik ve sessizlik üzerine yazar. Metinlerinde yavaşlamaya ve dikkat etmeye alan açar.",
         email: "leon@geceylekonusmak.net",
     },
     {
@@ -26,7 +26,7 @@ export const authors: Author[] = [
         handle: "@arin",
         color: "#58e3ff",
         tagline: "Bilinç, nörobilim ve sistem düşüncesi.",
-        bio: "Bilinç üzerine yazar; sinaptan kültüre uzanan bağları bulmaya çalışır. Matematiğin netliğiyle şiirin belirsizliğini barıştırmak ister. Sistem düşüncesi, dikkat hijyeni ve öz-düzenleme temel alanlarıdır.",
+        bio: "Bilinç, nörobilim ve sistem düşüncesi üzerine yazar. Modern yaşamın dikkat ve ritim üzerindeki etkilerini inceler.",
         email: "Arin@geceylekonusmak.net",
     },
     {

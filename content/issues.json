@@ -12,5 +12,19 @@
     "date": null,
     "description": "“Bugünün insanı acıyı yanlış yerde arıyor. Artık acı, bir yaranın kanaması değil; kendi iç rotasını kaybetmiş bir ruhun sessiz çırpınışıdır. İyileşmek ise bu rotayı yeniden bulma cesaretidir. Çünkü iyileşmek, acının geçmesinden çok, yönünü iyiye çevirmektir.”",
     "cover_url": ""
+  },
+  {
+    "number": 4,
+    "title": "Ritmi Geri Almak",
+    "date": null,
+    "description": "Ritmi Geri Almak, insanın hızla değil, sürekli tetikte yaşamaya zorlandığı bu çağda kendi iç temposunu yeniden hatırlama çağrısıdır. Düşük frekanslar bireysel bir zayıflık değil, toplumsal bir düzenlemenin sonucudur; bu sayı, ritmi geri almanın kaçış değil, bilinçli bir yeniden bağlanma olduğunu anlatır. Çünkü insan kendi ritmini bulduğunda yalnızca iyileşmez, bulunduğu alanı da dönüştürür",
+    "cover_url": ""
+  },
+  {
+    "number": 5,
+    "title": "Algının Dünyası",
+    "date": "2026-01-13",
+    "description": "Algı, çoğu zaman düşünceden önce çalışır. Ne gördüğümüzü değil, neyi görmeye değer bulduğumuzu seçer. Bu sayıda metinler, algının nasıl kurulduğunu ve hangi anlarda düşüncenin yerini aldığını takip eder.",
+    "cover_url": ""
   }
 ]

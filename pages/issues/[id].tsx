@@ -3,6 +3,8 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+
+import Header from "@/components/Header"; // ✅ eklendi
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
 import Footer from "@/components/Footer";
@@ -82,16 +84,15 @@ export default function IssuePage({
                         audioUrl: a.audioUrl ?? null,
                     })) as Card[];
 
-                if (!cancelled) {
-                    setLocalArts(mine);
-                }
+                if (!cancelled) setLocalArts(mine);
 
                 // local issue bilgisi
                 const issues = (mod.getIssues?.() ?? []) as any[];
                 const current = issues.find((it: any) => Number(it.number) === issueNo);
                 if (current && !cancelled) {
                     const t = typeof current.title === "string" ? current.title.trim() : "";
-                    const d = typeof current.description === "string" ? current.description.trim() : "";
+                    const d =
+                        typeof current.description === "string" ? current.description.trim() : "";
                     if (t) setIssueTitle(t);
                     if (d) setIssueDesc(d);
                 }
@@ -118,7 +119,6 @@ export default function IssuePage({
                 const j = await r.json();
                 const items = Array.isArray(j?.items) ? j.items : [];
 
-                // güvenli filtre (endpoint zaten filtreliyor ama yine de)
                 const mapped = items
                     .filter((x: any) => Number(x.issue_number ?? x.issueNumber ?? 0) === issueNo)
                     .map((x: any) => toCard(x, issueNo));
@@ -151,8 +151,8 @@ export default function IssuePage({
                     if (t) setIssueTitle(t);
                     if (d) setIssueDesc(d);
                 }
-            } catch (e: any) {
-                // abort / db yok -> sessiz geç (statik + adminStore devam)
+            } catch {
+                // abort / db yok -> sessiz geç
             }
         })();
 
@@ -163,24 +163,23 @@ export default function IssuePage({
     const list = useMemo(() => {
         const merged = [...serverArticles, ...dbArts, ...localArts];
 
-        // slug boşsa bozmayalım
         const filtered = merged.filter((x) => x && x.slug && x.title);
 
-        // uniq by slug (db/local/server hangisi son geldiyse onu alır)
         const uniq = Array.from(new Map(filtered.map((a) => [a.slug, a])).values());
 
-        // tarih sıralama (yoksa 0)
         uniq.sort((a, b) => (Date.parse(b.date || "") || 0) - (Date.parse(a.date || "") || 0));
         return uniq;
     }, [serverArticles, dbArts, localArts]);
 
     const label = String(issueNo).padStart(2, "0");
-    const displayIssueName = (issueTitle && issueTitle.trim()) ? issueTitle : `Sayı ${label}`;
-    const displayIssueDesc = (issueDesc && issueDesc.trim()) ? issueDesc : "Geceyle yazılmış parçalar.";
+    const displayIssueName = issueTitle?.trim() ? issueTitle : `Sayı ${label}`;
+    const displayIssueDesc = issueDesc?.trim() ? issueDesc : "Geceyle yazılmış parçalar.";
 
     return (
         <div className="min-h-screen flex flex-col bg-black text-white">
-            <div className="flex-1 px-6 py-12 max-w-4xl mx-auto">
+            <Header /> {/* ✅ eklendi */}
+
+            <div className="flex-1 px-6 py-12 max-w-5xl mx-auto w-full">
                 <motion.header
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -190,9 +189,7 @@ export default function IssuePage({
                         Geceyle Konuşmak
                     </h1>
 
-                    <h2 className="mt-4 text-2xl md:text-3xl text-amber-300">
-                        {displayIssueName}
-                    </h2>
+                    <h2 className="mt-4 text-2xl md:text-3xl text-amber-300">{displayIssueName}</h2>
 
                     <p className="mt-3 text-white/80">{displayIssueDesc}</p>
 
@@ -205,11 +202,9 @@ export default function IssuePage({
                     <p className="mt-10 text-white/60">Bu sayıya ait yazı yok.</p>
                 ) : (
                     <>
-                        <h3 className="mt-10 mb-4 text-xl text-amber-200">
-                            Bu sayıya ait yazılar
-                        </h3>
+                        <h3 className="mt-10 mb-4 text-xl text-amber-200">Bu sayıya ait yazılar</h3>
 
-                        <div className="space-y-8">
+                        <div className="space-y-6">
                             {list.map((a, i) => {
                                 const A = a.authorId ? AUTHORS[a.authorId] : undefined;
                                 const color = A?.color ?? "#9ca3af";
@@ -227,6 +222,7 @@ export default function IssuePage({
                                             className="block rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition px-6 py-5"
                                         >
                                             <div className="text-2xl text-amber-300">{a.title}</div>
+
                                             {a.excerpt && <p className="text-white/70 mt-1">{a.excerpt}</p>}
 
                                             <div className="mt-2 flex items-center gap-2 text-sm text-white/60">
@@ -235,7 +231,9 @@ export default function IssuePage({
                             style={{ background: color }}
                         />
                                                 <span>{name}</span>
-                                                {(a.embedUrl || a.audioUrl) && <span className="opacity-75 ml-1">🎧</span>}
+                                                {(a.embedUrl || a.audioUrl) && (
+                                                    <span className="opacity-75 ml-1">🎧</span>
+                                                )}
                                             </div>
                                         </Link>
                                     </motion.div>
