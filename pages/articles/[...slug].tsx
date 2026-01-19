@@ -8,7 +8,6 @@ import { marked } from "marked";
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import SupportThisText from "@/components/SupportThisText";
 import ArticleLayout from "@/components/ArticleLayout";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
@@ -399,10 +398,7 @@ export default function ArticlePage({
                                 <p className="text-white/60">Bu yazı bulunamadı.</p>
                             )}
                         </motion.div>
-
-                        <div className="mt-10 border-t border-white/10 pt-8">
-                            <SupportThisText slug={pageSlug} title={finalTitle} />
-                        </div>
+                        
 
                         {/* ✅ Like + Comments */}
                         <div className="mt-10 border-t border-white/10 pt-8">

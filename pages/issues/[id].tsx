@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
-import Header from "@/components/Header"; // ✅ eklendi
+import Header from "@/components/Header";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
 import Footer from "@/components/Footer";
+import SupportThisText from "@/components/SupportThisText";
 
 type AnyAuthor = { id: string; name: string; color?: string };
 const AUTHORS: Record<string, AnyAuthor> = Object.fromEntries(
@@ -70,7 +71,6 @@ export default function IssuePage({
             try {
                 const mod = await import("@/lib/adminStore");
 
-                // local yazılar
                 const mine = (mod.getArticles?.() ?? [])
                     .filter((a: any) => (Number(a.issueNumber) || 1) === issueNo)
                     .map((a: any) => ({
@@ -86,13 +86,11 @@ export default function IssuePage({
 
                 if (!cancelled) setLocalArts(mine);
 
-                // local issue bilgisi
                 const issues = (mod.getIssues?.() ?? []) as any[];
                 const current = issues.find((it: any) => Number(it.number) === issueNo);
                 if (current && !cancelled) {
                     const t = typeof current.title === "string" ? current.title.trim() : "";
-                    const d =
-                        typeof current.description === "string" ? current.description.trim() : "";
+                    const d = typeof current.description === "string" ? current.description.trim() : "";
                     if (t) setIssueTitle(t);
                     if (d) setIssueDesc(d);
                 }
@@ -152,7 +150,7 @@ export default function IssuePage({
                     if (d) setIssueDesc(d);
                 }
             } catch {
-                // abort / db yok -> sessiz geç
+                // sessiz geç
             }
         })();
 
@@ -162,11 +160,8 @@ export default function IssuePage({
     /* ------------------ Merge + dedupe + sort ------------------ */
     const list = useMemo(() => {
         const merged = [...serverArticles, ...dbArts, ...localArts];
-
         const filtered = merged.filter((x) => x && x.slug && x.title);
-
         const uniq = Array.from(new Map(filtered.map((a) => [a.slug, a])).values());
-
         uniq.sort((a, b) => (Date.parse(b.date || "") || 0) - (Date.parse(a.date || "") || 0));
         return uniq;
     }, [serverArticles, dbArts, localArts]);
@@ -175,9 +170,18 @@ export default function IssuePage({
     const displayIssueName = issueTitle?.trim() ? issueTitle : `Sayı ${label}`;
     const displayIssueDesc = issueDesc?.trim() ? issueDesc : "Geceyle yazılmış parçalar.";
 
+    // ✅ Destek scroll + flash (Issue01 ile aynı davranış)
+    const supportId = "support";
+    function goSupport(e: React.MouseEvent<HTMLAnchorElement>) {
+        e.preventDefault();
+        document.getElementById(supportId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        history.replaceState(null, "", `#${supportId}`);
+        window.dispatchEvent(new CustomEvent("gk:flash-support", { detail: { id: supportId } }));
+    }
+
     return (
         <div className="min-h-screen flex flex-col bg-black text-white">
-            <Header /> {/* ✅ eklendi */}
+            <Header />
 
             <div className="flex-1 px-6 py-12 max-w-5xl mx-auto w-full">
                 <motion.header
@@ -193,8 +197,16 @@ export default function IssuePage({
 
                     <p className="mt-3 text-white/80">{displayIssueDesc}</p>
 
-                    <div className="mt-4">
+                    {/* ✅ Anasayfa + Destek aynı satır */}
+                    <div className="mt-4 flex items-center gap-4 text-sm">
                         <BackLink href="/" label="← Anasayfaya Dön" />
+                        <a
+                            href={`#${supportId}`}
+                            onClick={goSupport}
+                            className="text-amber-300/80 hover:text-amber-200 transition"
+                        >
+                            • Destek ol
+                        </a>
                     </div>
                 </motion.header>
 
@@ -231,9 +243,7 @@ export default function IssuePage({
                             style={{ background: color }}
                         />
                                                 <span>{name}</span>
-                                                {(a.embedUrl || a.audioUrl) && (
-                                                    <span className="opacity-75 ml-1">🎧</span>
-                                                )}
+                                                {(a.embedUrl || a.audioUrl) && <span className="opacity-75 ml-1">🎧</span>}
                                             </div>
                                         </Link>
                                     </motion.div>
@@ -242,6 +252,9 @@ export default function IssuePage({
                         </div>
                     </>
                 )}
+
+                {/* ✅ anchor + flash hedefi */}
+                <SupportThisText slug={`issue-${label}`} title={displayIssueName} anchorId={supportId} />
             </div>
 
             <Footer />

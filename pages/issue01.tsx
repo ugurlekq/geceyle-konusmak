@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-import Header from "@/components/Header"; // ✅ EKLENDİ
+import Header from "@/components/Header";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
 import Footer from "@/components/Footer";
+import SupportThisText from "@/components/SupportThisText";
 
 type ArticleCard = {
     slug: string;
@@ -26,7 +27,6 @@ const AUTHORS: Record<string, AnyAuthor> = Object.fromEntries(
     (authors as AnyAuthor[]).map((a) => [a.id, a])
 );
 
-// ✅ SABİT METNİ FARKLI İSİMLE TUT
 const ISSUE01_DESC_FALLBACK =
     "İlk Gece; günün artık sustuğu, cümlelerin kendine ait bir ses bulmaya başladığı eşiktir. Bu sayıda metinler anlatmaz, eşlik eder. Okurla birlikte yavaşlar, birlikte düşünür.";
 
@@ -55,7 +55,6 @@ export default function Issue01({ articles = [] }: Props) {
 
                 setDyn(mine);
 
-                // Sayı 01 açıklamasını adminStore'dan override et (varsa)
                 let desc: string | null = null;
 
                 if (typeof (mod as any).getIssues === "function") {
@@ -77,7 +76,7 @@ export default function Issue01({ articles = [] }: Props) {
 
     return (
         <div className="min-h-screen flex flex-col bg-black text-white">
-            <Header /> {/* ✅ ARTIK BURADA */}
+            <Header />
 
             <main className="flex-1 px-6 py-12 max-w-5xl mx-auto w-full">
                 <motion.div
@@ -97,8 +96,24 @@ export default function Issue01({ articles = [] }: Props) {
                         {issueDesc}
                     </p>
 
-                    <div className="mt-4">
+                    {/* ✅ aynı satır: Anasayfa + Destek */}
+                    <div className="mt-4 flex items-center gap-4 text-sm">
                         <BackLink href="/" label="← Anasayfaya Dön" />
+
+                        <a
+                            href="#support"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                const id = "support";
+                                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                history.replaceState(null, "", `#${id}`);
+                                window.dispatchEvent(new CustomEvent("gk:flash-support", { detail: { id } }));
+                            }}
+                            className="text-amber-300/80 hover:text-amber-200 transition"
+                        >
+                            • Destek ol
+                        </a>
+
                     </div>
 
                     <h3 className="mt-14 text-2xl md:text-3xl text-amber-300">
@@ -139,10 +154,10 @@ export default function Issue01({ articles = [] }: Props) {
                                         )}
 
                                         <div className="mt-2 flex items-center gap-2 text-sm text-white/60">
-                                            <span
-                                                className="inline-block h-2.5 w-2.5 rounded-full"
-                                                style={{ background: badgeColor }}
-                                            />
+                      <span
+                          className="inline-block h-2.5 w-2.5 rounded-full"
+                          style={{ background: badgeColor }}
+                      />
                                             <span>{authorName}</span>
                                             {a.hasMedia && (
                                                 <span className="opacity-75 ml-1">🎧</span>
@@ -154,6 +169,9 @@ export default function Issue01({ articles = [] }: Props) {
                         })}
                     </div>
                 )}
+
+                {/* ✅ sayfa sonu destek kartı + anchor hedefi */}
+                <SupportThisText slug="issue-01" title="İlk Gece" anchorId="support" />
             </main>
 
             <Footer />
