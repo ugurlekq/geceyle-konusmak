@@ -1,74 +1,19 @@
-Günün ağırlığı bazen kelimelerden önce gelir.
-Dışarıdaki gürültü çoğalır, ekranlar hızlanır, gökyüzüne asılı haberler üst üste yığılır.
-Ama insanın içindeki ritim hâlâ çok eski bir sessizlikle atar.
-Zihin, çağın gürültüsünü her duyduğunda içerdeki o eski sessizliğe dönmek ister;
-çünkü insan, ilk önce sessizlikte yaratıldı.
-Bedenin hafızası bundan hiç vazgeçmedi.
+Günün ağırlığı çoğu zaman kelimelerden önce gelir. Dışarıdaki gürültü arttıkça ekranlar hızlanır, gökyüzüne asılı haberler üst üste yığılır; ama insanın içindeki ritim hâlâ çok eski bir sessizlikle atar. Zihin çağın gürültüsünü her duyduğunda, içerdeki o eski sessizliğe dönmek ister. Çünkü insan ilk olarak sessizlikte yaratılmıştır ve bedenin hafızası bundan hiç vazgeçmemiştir.
 
-Çoğu kişi fark etmese de insan zihni iki ayrı zamanla çalışır:
-Biri milyonlarca yıllık evrimsel yavaşlık,
-diğeri modern çağın saniyeler içinde değişen akışı.
-Bu iki zamanı aynı bedende taşımak yorgunluk değil;
-tam tersine, insanın en büyük bilincidir.
+İnsan zihni, çoğu zaman fark edilmeden iki ayrı zamanla çalışır. Biri milyonlarca yıllık evrimsel yavaşlık, diğeri modern çağın saniyeler içinde değişen akışı. Bu iki zamanı aynı bedende taşımak bir zayıflık değil, insan bilincinin en büyük ayrıcalığıdır. Sorun bu iki ritmin varlığı değil, modern hızın yavaş olanı bastırmaya çalışmasıdır. Oysa beden, kendi temposu dışına itildiğinde bunu sessiz bir huzursuzlukla haber verir.
 
-Bazen içimizde beliren huzursuzluk, aslında zihnin “bu hız bana ait değil” demesidir.
-Nörobilim buna aşırı yüklenmiş sinir sistemi der;
-biz ise sadece “yetişemiyorum” diye tarif ederiz.
-Ne isim önemlidir burada, ne tanım;
-önemli olan, bedenin hâlâ kendi ritmine bağlı olduğunu fark etmektir.
-Kalp, tehlikeyi anlamadan hızlanmaz.
-Zihin, dikkatini tüketmeden susmaz.
-İkisi de bizi korumaya çalışan sessiz bir hafızadır.
+İçimizde beliren o belirsiz rahatsızlık çoğu zaman bir sorun değildir; zihnin “bu hız bana ait değil” deme biçimidir. Nörobilim buna aşırı yüklenmiş sinir sistemi der, biz ise genellikle “yetişemiyorum” diye tarif ederiz. İsimlerin bir önemi yoktur. Asıl önemli olan, bedenin hâlâ kendi ritmini korumaya çalıştığını fark edebilmektir. Kalp, tehlikeyi sezmeden hızlanmaz; zihin, dikkati tükenmeden susmaz. Her ikisi de bizi koruyan, konuşmayan ama hatırlatan bir hafızadır.
 
-İnsan çoğu zaman farkındalıkla değil, fark etmeden iyileşir.
-Bir şeyi düşünmeyi bıraktığımızda değil,
-o düşüncenin üzerimizdeki baskısı azaldığında rahatlarız.
-Beynin çalışma biçimi budur:
-Tehdit algısı düştüğünde, yaratıcı devreler açılır.
-Bu bir teori değil —
-her insanın kendi bedeninde hissettiği derin bir gerçekliktir.
+İnsan çoğu zaman farkındalıkla değil, fark etmeden iyileşir. Bir düşünceyi bastırdığımızda değil, onun üzerimizdeki baskısı azaldığında rahatlarız. Beynin çalışma biçimi budur: tehdit algısı düştüğünde yaratıcı devreler kendiliğinden açılır. Bu bir teori değildir; herkesin kendi bedeninde sezebileceği, gündelik ama derin bir gerçektir.
 
-Bu yüzden çağımızda en önemli şey, bilgi değil;
-ince ayarlardır.
+Bu yüzden çağımızda asıl mesele bilgi değil, ince ayarlardır. Küçük, görünmez ama zihnin ritmini kökten değiştiren düzenlemeler… Bir anlığına nefese dönmek, beynin tehlike taramasını yumuşatır. Doğaya temas etmek, binlerce yıllık güven duygusunu yeniden aktive eder. Birine gerçekten “nasılsın” demek, sinir sistemine bağ kurduğunu hatırlatır. Yazmak, çizmek, üretmek ise beynin anlam merkezlerini yeniden uyandırır.
 
-Küçük, görünmez, ama zihnin ritmini kökten değiştiren ayarlar:
+Bunlar romantik jestler değildir. Bunlar insanın biyolojik yazılımına dokunan mikro müdahalelerdir. Varlığımızı ayakta tutan şeyler çoğu zaman büyük kararlar değil, bu görünmez ince çizgilerdir.
 
-Bir anlığına nefese dönmek, beynin tehlike taramasını yumuşatır.
-Doğaya dokunmak, binlerce yıllık güven hissini aktive eder.
-Birine “nasılsın” demek, sinir sistemine bağ kurduğunu hatırlatır.
-Yaratmak — yazmak, çizmek, üretmek — beynin anlam merkezlerini yeniden uyandırır.
+Belki de bu çağın en önemli fark edişi, kendimizi yeniden düzenleyebildiğimizi anlamamızdır. Düşünce biçimini, duygusal tepkiyi, dikkat alışkanlıklarını… Hepsi öğrenilebilir, dönüştürülebilir. İnsan içgüdüsünün ötesine geçebilen tek canlıdır; çünkü kendi zihnini izleyebilir. İzlediği şeyi şekillendirebilir. Şekillendirdiği şeyle yeniden başlayabilir.
 
-Bunlar romantik davranışlar değil;
-insanın biyolojik yazılımına dokunan mikro düzenlemelerdir.
-Varlığımızı ayakta tutan ince çizgiler.
+İnsan kendi ritmine döndüğünde başka bir sessizlik türü ortaya çıkar. Dinlendiren, ağırlaştırmayan, varlığın içinden süzülen bir sessizliktir bu. O sessizlikte insan kendini kaybetmez; tam tersine, kendine yaklaşır. Gürültü azaldıkça, zihin genişler. Hız düştükçe, dikkat derinleşir.
 
-Belki de bu çağın en büyük buluşu,
-“kendimizi yeniden programlayabildiğimizi” anlamamızdır.
-Düşünceyi, duyguyu, dikkat biçimini…
-Hepsi eğitilebilir.
-İnsan, içgüdüsünün ötesine geçen tek canlıdır;
-çünkü kendi zihnini izleyebilir.
-İzlediği şeyi şekillendirebilir.
-Şekillendirdiği şeyle yeniden doğabilir.
+Çağ ne kadar gürültülü olursa olsun, insanın içindeki o eski ritmi kimse elinden alamaz. Gün geceye döndüğünde, bir cümlenin, bir nefesin, bir bakışın içindeki ince titreşim yine yerini bulur. Ve belki de insanın en sessiz direnci tam burada başlar: kendini unutacak kadar hızlanmamak, kendi sesini duyamayacak kadar gürültüye teslim olmamak.
 
-Ve insan, kendi ritmine döndüğünde başka bir sessizlik türü belirir:
-Dinlendiren, ağırlaştırmayan,
-varlığın içinden süzülen o yeni sessizlik.
-O sessizlikte insan, kendini kaybetmez;
-tam tersine, kendine kavuşur.
-
-Çağ ne kadar gürültülü olursa olsun,
-insanın içindeki o ritmi kimse elinden alamaz.
-Gün, geceye döndüğünde,
-bir cümlenin, bir nefesin, bir bakışın içindeki o ince titreşim yine yerini bulur.
-
-Ve belki de insanın en büyük direnci,
-kendini unutacak kadar hızlanmamak,
-kendi sesini duyamayacak kadar gürültüye kapılmamaktır.
-
-Her şeyin içinden geçiyoruz, evet.
-Ama en önemlisi:
-Kendi içimizden de geçiyoruz.
-
-Ve o geçiş…
-bu çağın en sessiz, en derin uyanışıdır.
+Her şeyin içinden geçiyoruz, evet. Ama en önemlisi, kendi içimizden de geçiyoruz. Ve o geçiş, bu çağın en sessiz ama en derin uyanışıdır.

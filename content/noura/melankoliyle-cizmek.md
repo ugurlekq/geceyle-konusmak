@@ -2,7 +2,7 @@
 title: "Melankoliyle Çizmek"
 excerpt: "Melankoli, gölgenin değil; gölgenin çizgisidir. Duygunun biçim arayışında saklı bir ışık vardır."
 date: "2025-10-23"
-authorId: "leon-varis"
+authorId: "noura-es"
 embedUrl: "https://www.youtube.com/watch?v=ffCvy7QT9C8&list=RDffCvy7QT9C8&start_radio=1&t=18263s"
 ---
 
@@ -43,5 +43,5 @@ Ve melankoli tam da bu nedenle bir çağrıdır:
 
 Sanat, melankoliyi iyileştirmez; onunla birlikte yaşamanın üslubunu öğretir.  
 Ve üslup, iyileşmekten daha kalıcıdır.  
-Çünkü biçim bulmuş acı artık acı değildir; bilince dönüşmüştür.
+Çünkü biçim bulan acı, artık taşınmaz; bilince karışır.
 

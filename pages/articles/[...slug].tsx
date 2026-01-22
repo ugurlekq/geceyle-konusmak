@@ -60,6 +60,9 @@ export default function ArticlePage({
     const router = useRouter();
     const [rt, setRt] = useState<RuntimeArticle | null>(null);
 
+    const [showAudio, setShowAudio] = useState(false);
+    const audioRef = useRef<HTMLDivElement | null>(null);
+
     // ✅ Stabil slug
     const pageSlug = useMemo(() => {
         if (!router.isReady) return "";
@@ -85,6 +88,13 @@ export default function ArticlePage({
         if (!el) return;
         el.style.height = "0px"; // kritik
         el.style.height = Math.min(el.scrollHeight, 220) + "px";
+    }
+
+    function openAudio() {
+        setShowAudio(true);
+        requestAnimationFrame(() => {
+            audioRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
     }
 
     function getVisitorId() {
@@ -270,7 +280,6 @@ export default function ArticlePage({
             ? `Sayı ${String(finalIssueNo).padStart(2, "0")}`
             : "Sayı 01";
 
-
     const embed = finalEmbed ? toEmbed(finalEmbed) : null;
 
     const showLoading = !html && !rt;
@@ -298,10 +307,7 @@ export default function ArticlePage({
                     {/* ✅ Breadcrumb */}
                     <div className="max-w-5xl mx-auto px-6 pt-6">
                         <nav className="text-xs md:text-sm text-white/55 flex flex-wrap items-center gap-2">
-                            <a
-                                href={issueHref}
-                                className="hover:text-amber-300 transition"
-                            >
+                            <a href={issueHref} className="hover:text-amber-300 transition">
                                 {issueLabel}
                             </a>
 
@@ -325,34 +331,45 @@ export default function ArticlePage({
                     </div>
 
                     <ArticleLayout title={finalTitle}>
-                        {/* Meta satırı: yazar + sayı + tarih */}
-                        {(author || finalIssueNo || formattedDate) && (
-                            <div className="text-sm text-white/60 mb-6">
-                                {author && <span>{author.name}</span>}
-                                {finalIssueNo && (
-                                    <span>
-                    {author ? " • " : ""}
-                                        Sayı {finalIssueNo}
-                  </span>
-                                )}
-                                {formattedDate && (
-                                    <span>
-                    {author || finalIssueNo ? " • " : ""}
-                                        {formattedDate}
-                  </span>
+                        {/* ✅ Meta satırı: yazar + sayı + tarih + 🎧 CTA */}
+                        {(author || finalIssueNo || formattedDate || finalAudio) && (
+                            <div className="text-sm text-white/60 mb-6 flex items-center gap-3 flex-wrap">
+                                <div>
+                                    {author && <span>{author.name}</span>}
+                                    {finalIssueNo && (
+                                        <span>{author ? " • " : ""}Sayı {finalIssueNo}</span>
+                                    )}
+                                    {formattedDate && (
+                                        <span>
+                      {author || finalIssueNo ? " • " : ""}
+                                            {formattedDate}
+                    </span>
+                                    )}
+                                </div>
+
+                                {/* ✅ Sesli dinle CTA */}
+                                {finalAudio && (
+                                    <button
+                                        type="button"
+                                        onClick={openAudio}
+                                        className="text-amber-200/90 hover:text-amber-200 transition underline underline-offset-4"
+                                    >
+                                        🎧 Yazıyı sesli dinle
+                                    </button>
                                 )}
                             </div>
                         )}
 
-                        {/* Embed / audio bloğu */}
+                        {/* ✅ Embed + Audio bloğu: embed varsa iframe + (audio varsa) altına audio */}
                         {(embed || finalAudio) && (
                             <motion.div
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 1.2 }}
                             >
-                                <div className="mb-10 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
-                                    {embed ? (
+                                {/* Embed kartı */}
+                                {embed && (
+                                    <div className="mb-6 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-sm">
                                         <iframe
                                             src={embed.src}
                                             width="100%"
@@ -362,16 +379,49 @@ export default function ArticlePage({
                                             className="rounded-2xl"
                                             title={`${finalTitle} — embed`}
                                         />
-                                    ) : (
-                                        <div className="p-4">
-                                            <audio
-                                                src={finalAudio!}
-                                                controls
-                                                className="w-full rounded-lg bg-black/30"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
+
+                                {/* Audio kartı (youtube altına / meta CTA ile açılır) */}
+                                {finalAudio && (
+                                    <div
+                                        ref={audioRef}
+                                        className={`mb-10 rounded-2xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm transition ${
+                                            showAudio ? "opacity-100" : "opacity-90"
+                                        }`}
+                                    >
+                                        {showAudio ? (
+                                            <div className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="text-sm text-white/80">🎧 Sesli okuma</div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowAudio(false)}
+                                                        className="text-xs text-white/60 hover:text-white/80 transition"
+                                                    >
+                                                        Kapat
+                                                    </button>
+                                                </div>
+
+                                                <audio
+                                                    src={finalAudio}
+                                                    controls
+                                                    className="w-full rounded-lg bg-black/30"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="p-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowAudio(true)}
+                                                    className="px-4 py-2 rounded-xl border border-white/15 bg-white/10 hover:bg-white/15 transition"
+                                                >
+                                                    🎧 Sesli okumayı aç
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
@@ -398,7 +448,6 @@ export default function ArticlePage({
                                 <p className="text-white/60">Bu yazı bulunamadı.</p>
                             )}
                         </motion.div>
-                        
 
                         {/* ✅ Like + Comments */}
                         <div className="mt-10 border-t border-white/10 pt-8">
@@ -446,9 +495,7 @@ export default function ArticlePage({
                                 {/* Liste */}
                                 <div className="space-y-3">
                                     {comments.length === 0 ? (
-                                        <div className="text-white/50 text-sm">
-                                            Henüz yorum yok.
-                                        </div>
+                                        <div className="text-white/50 text-sm">Henüz yorum yok.</div>
                                     ) : (
                                         comments.map((c) => (
                                             <div
@@ -543,6 +590,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
         fallback: "blocking",
     };
 };
+
 function safeText(s: string) {
     return (s || "").replace(/\s+/g, " ").trim();
 }

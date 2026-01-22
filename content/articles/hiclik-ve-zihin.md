@@ -1,52 +1,18 @@
-Kozmosun karanlığında beliren tek bir ışık…
-bazen bir varlığın yolunu bulması için gereken tek şeydir.
-Parlamaz, yakmaz, çağırmaz;
-yalnızca orada durur
-ve varlığıyla bir denge kurar.
+Kozmosun karanlığında beliren tek bir ışık… Bazen bir varlığın yönünü bulması için gereken tek şey budur. Parlamaz, yakmaz, çağırmaz. Sadece orada durur ve varlığıyla bir denge kurar. Görülmek için çabalamaz; ama görüldüğünde her şeyi yerli yerine oturtur.
 
-Hiçlik de bu ışık gibidir.
-Korkutmak için değil,
-yeniden düzenlemek için açılan sessiz bir alan.
+Hiçlik de buna benzer. Korkutmak için değil, yeniden düzenlemek için açılan sessiz bir alandır. Yokluk değildir; aksine, fazlalığın çekildiği, geriye yalnızca olanın kaldığı bir açıklık hâlidir.
 
-Dış dünyanın gürültüsü azaldığında,
-zihin kendi iç ritmine yaklaşır.
-Bu ritim ne hız ister, ne de acele;
-yalnızca ağırlığını bıraktığın bir anı bekler.
+Dış dünyanın gürültüsü azaldığında zihin kendi iç ritmine yaklaşır. Bu ritim hız istemez, acele etmez, performans talep etmez. Sadece ağırlığını bıraktığın bir anı bekler. O anda boşluk, bir eksilme gibi değil; bütün ihtimallerin askıda durduğu bir ara kapı gibi hissedilir.
 
-O anda boşluk, yokluk değil;
-bütün ihtimallerin durduğu bir ara kapı olur.
+Hiçlik, hiçbir şey istemeyen bir alandır. Yön vermez, baskı kurmaz, sınav yapmaz. Sana kim olduğunu sormaz; yalnızca kim olmadığını görünür kılar. Ve tam da bu yüzden zihin, bu genişlikte kendi şeklini hatırlamaya başlar.
 
-Hiçlik, hiçbir şey istemeyen bir alandır.
-Yön vermez, baskı kurmaz, sınav yapmaz.
-Yalnızca genişler
-ve o genişlikte zihin kendi şeklini hatırlar.
+Bütün düşüşlerin, bütün yorgunlukların kısa bir süreliğine askıya alındığı bir duraksama gibidir bu hâl. Ne geçmiş yük olur, ne gelecek tehdit. Zaman kendi içine doğru kıvrılır ve varoluş, alışık olduğu gürültüyü kaybeder. Sessizlik rahatsız edici değildir; sadece alışılmadıktır.
 
-Bütün düşüşlerin, bütün yorgunlukların
-bir süreliğine askıya alındığı
-hafif bir duraksama gibidir bu.
+Bu sessizlikte bir ışık belirir. Küçük, titremeyen, sabırlı bir ışık. Onu görmek için bakan bir göz olmasa bile varlığından vazgeçmez. Çünkü bu ışık bir çağrı değil, bir imkândır. Görüldüğü anda anlam kazanır; görülmediğinde de var olmaya devam eder.
 
-Ne geçmiş yük olur,
-ne gelecek tehdit.
-Zaman, kendi içine doğru kıvrılır
-ve varoluş sessizleşir.
+Yeni olan şeyler genellikle burada başlar. Büyük planlardan, büyük karar anlarından değil; küçük bir fark edişten. “Buradayım” demekten bile daha sessiz bir yerden. Boşluk kendi iç düzenini kurmaya başladığında, zihin de kendini yeniden hizalar.
 
-Bu sessizlikte bir ışık belirir—
-küçük, titremeyen, sabırlı bir ışık.
-Onu görmeye çalışan bir göz yoksa bile
-ışık yine de vardır.
+İnsan çoğu zaman hiçliğe düştüğünü sanır. Oysa çoğu durumda düşülen yer, fazla anlamdan arınmış bir alandır. Hiçlik, bir varlığın yok oluşa değil, yeni bir bütünlüğe doğru sessizce ilerlemesini sağlar. Zihnin yeniden merkezlenmesi tam olarak budur.
 
-Yeni yaşam, işte bu ışıktan doğar.
-Büyük planlardan, büyük kararlarlardan değil;
-küçük bir fark edişten.
-
-Boşluk, kendi iç düzenini kurmaya başladığında
-zihin de kendini yeniden kurar.
-Her şeyin bittiğini sandığın yerde
-başlangıcın en sade hali açılır.
-
-Hiçlik, bir varlığın yok oluşa değil,
-yeni bir bütünlüğe doğru
-sessizce ilerlemesini sağlar.
-
-Ve yol bazen bir ışıkla değil,
-ışığın fark edilmesiyle başlar.
+Ve yol bazen bir ışıkla başlamaz. Yol, ışığın fark edilmesiyle başlar.
+Hiçliğin içindeki bu fark ediş, zihne şunu öğretir: Her şey dolu olmak zorunda değildir. Bazı şeyler, ancak boş kaldığında anlamlı hâle gelir.
