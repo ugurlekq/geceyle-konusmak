@@ -19,31 +19,141 @@ import type { Article } from '@/types';
 import { authors } from '../data/authors';
 
 /* ----------------------- Yazarlar ----------------------- */
+/* ----------------------- Yazarlar ----------------------- */
+
+function IconMail(props: React.SVGProps<SVGSVGElement>) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+            <path
+                d="M4 6.5h16v11H4v-11Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                opacity="0.9"
+            />
+            <path
+                d="M4.8 7.2 12 12.4l7.2-5.2"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+            />
+        </svg>
+    );
+}
+
+/* ----------------------- Yazarlar ----------------------- */
 function AuthorsGrid() {
     return (
-        <section className="relative z-10 mx-auto max-w-4xl px-6 mt-16">
-            <h2 className="text-xl text-white/80 mb-4">Yazarlar</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-                {authors.map((a) => (
-                    <Link
-                        key={a.id}
-                        href={`/authors/${a.id}`}
-                        className="rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition p-4"
-                    >
-                        <div className="flex items-center gap-3">
-                            <span
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: a.color }}
+        <section className="relative z-10 mx-auto max-w-5xl px-6 mt-16">
+            <div className="flex items-end justify-between gap-4 mb-4">
+                <h2 className="text-xl text-white/80">Yazarlar</h2>
+                <span className="text-xs text-white/40 hidden sm:inline">
+          Kartlara tıkla → yazar profili
+        </span>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-5">
+                {authors.map((a) => {
+                    const traits = a.traits ?? [];
+                    const img = a.profileImage || `/images/authors/${a.id}.png`;
+
+                    return (
+                        <Link
+                            key={a.id}
+                            href={`/authors/${a.id}`}
+                            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/55 hover:bg-black/65 transition shadow-[0_0_60px_rgba(0,0,0,.45)]"
+                        >
+                            {/* yumuşak renk aurası */}
+                            <div
+                                className="pointer-events-none absolute -inset-12 opacity-0 group-hover:opacity-100 transition duration-500 blur-2xl"
+                                style={{
+                                    background: `radial-gradient(circle at 25% 20%, ${a.color}22, transparent 55%)`,
+                                }}
+                                aria-hidden
                             />
-                            <span className="text-amber-300 text-lg">{a.name}</span>
-                        </div>
-                        <p className="text-white/70 mt-2">{a.tagline}</p>
-                    </Link>
-                ))}
+
+                            <div className="relative p-5 md:p-6">
+                                {/* header */}
+                                <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-start gap-4">
+                                        {/* avatar */}
+                                        <div className="shrink-0">
+                                            <div className="h-14 w-14 rounded-full overflow-hidden border border-white/10 bg-white/5">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={img}
+                                                    alt={a.name}
+                                                    className="h-full w-full object-cover"
+                                                    loading="lazy"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* name + tagline */}
+                                        <div>
+                                            <div className="flex items-baseline gap-2">
+                                                <div
+                                                    className="text-2xl md:text-3xl font-semibold"
+                                                    style={{ color: a.color }}
+                                                >
+                                                    {a.name}
+                                                </div>
+                                                <div className="text-white/45">{a.handle}</div>
+                                            </div>
+
+                                            <p className="mt-2 text-white/70 leading-relaxed">
+                                                {a.tagline}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-white/35 text-sm mt-1 hidden md:block">
+                                        Profili aç →
+                                    </div>
+                                </div>
+
+                                {/* orta metin */}
+                                <p className="mt-4 text-white/60 leading-relaxed text-sm md:text-base">
+                                    {a.cardBio || a.bio}
+                                </p>
+
+                                {/* traits */}
+                                {traits.length > 0 && (
+                                    <div className="mt-4 flex flex-wrap gap-2">
+                                        {traits.slice(0, 3).map((t) => (
+                                            <span
+                                                key={t}
+                                                className="px-3 py-1 rounded-full border border-white/15 bg-white/5 text-[0.72rem] uppercase tracking-wide text-white/70"
+                                            >
+                        {t}
+                      </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* footer */}
+                                <div className="mt-5 flex items-center justify-between gap-3 text-sm text-white/55">
+                                    {a.email ? (
+                                        <span className="inline-flex items-center gap-2">
+                      <span aria-hidden>✉️</span>
+                      <span className="text-white/60">{a.email}</span>
+                    </span>
+                                    ) : (
+                                        <span />
+                                    )}
+
+                                    <span className="text-white/35 group-hover:text-white/55 transition">
+                    Profili aç →
+                  </span>
+                                </div>
+                            </div>
+                        </Link>
+                    );
+                })}
             </div>
         </section>
     );
 }
+
 
 /* ------------------- Dinamik Yazılar -------------------- */
 function DynamicArticles({ items }: { items: Article[] }) {
