@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import VisualOverlay from "../components/VisualOverlay";
 import ThemeToggle from "../components/ThemeToggle";
 import { AnimatePresence, motion } from "framer-motion";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function App({ Component, pageProps, router }: AppProps) {
     return (
@@ -22,14 +23,15 @@ export default function App({ Component, pageProps, router }: AppProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1.2 }}
                     >
-                        {/* stiller motion içinde değil */}
                         <div className="relative z-10">
                             <Component {...pageProps} />
                         </div>
                     </motion.div>
                 </AnimatePresence>
+
+                {/* ✅ Analytics en altta kalsın */}
+                <Analytics />
             </VisualOverlay>
         </SessionProvider>
     );
 }
-
