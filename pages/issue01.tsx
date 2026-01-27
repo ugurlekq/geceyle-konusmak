@@ -1,7 +1,7 @@
 // /pages/issue01.tsx
 import type { GetStaticProps } from "next";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
 import Header from "@/components/Header";
@@ -9,6 +9,7 @@ import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
 import Footer from "@/components/Footer";
 import SupportThisText from "@/components/SupportThisText";
+import IssueAlbum from "@/components/IssueAlbum"; // ✅ eklendi
 
 type ArticleCard = {
     slug: string;
@@ -35,6 +36,8 @@ export default function Issue01({ articles = [] }: Props) {
     const [issueDesc, setIssueDesc] = useState<string>(ISSUE01_DESC_FALLBACK);
 
     useEffect(() => {
+        let cancelled = false;
+
         (async () => {
             try {
                 const mod = await import("@/lib/adminStore");
@@ -53,26 +56,34 @@ export default function Issue01({ articles = [] }: Props) {
                         issueNumber: 1,
                     })) as ArticleCard[];
 
-                setDyn(mine);
+                if (!cancelled) setDyn(mine);
 
                 let desc: string | null = null;
-
                 if (typeof (mod as any).getIssues === "function") {
                     const all = (mod as any).getIssues() ?? [];
                     const found = all.find((it: any) => Number(it.number) === 1);
                     if (found?.description) desc = found.description;
                 }
 
-                if (desc?.trim()) setIssueDesc(desc.trim());
+                if (!cancelled && desc?.trim()) setIssueDesc(desc.trim());
             } catch {
                 // sessiz geç
             }
         })();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
-    const list = [...articles, ...dyn]
-        .filter((x) => (x.issueNumber ?? 1) === 1)
-        .sort((a, b) => (Date.parse(b.date || "") || 0) - (Date.parse(a.date || "") || 0));
+    const list = useMemo(() => {
+        return [...articles, ...dyn]
+            .filter((x) => (x.issueNumber ?? 1) === 1)
+            .sort(
+                (a, b) =>
+                    (Date.parse(b.date || "") || 0) - (Date.parse(a.date || "") || 0)
+            );
+    }, [articles, dyn]);
 
     return (
         <div className="min-h-screen flex flex-col bg-black text-white">
@@ -88,13 +99,9 @@ export default function Issue01({ articles = [] }: Props) {
                         Geceyle Konuşmak
                     </h1>
 
-                    <h2 className="mt-4 text-2xl md:text-3xl text-amber-300">
-                        İlk Gece
-                    </h2>
+                    <h2 className="mt-4 text-2xl md:text-3xl text-amber-300">İlk Gece</h2>
 
-                    <p className="text-white/80 mt-3 leading-relaxed">
-                        {issueDesc}
-                    </p>
+                    <p className="text-white/80 mt-3 leading-relaxed">{issueDesc}</p>
 
                     {/* ✅ aynı satır: Anasayfa + Destek */}
                     <div className="mt-4 flex items-center gap-4 text-sm">
@@ -105,16 +112,26 @@ export default function Issue01({ articles = [] }: Props) {
                             onClick={(e) => {
                                 e.preventDefault();
                                 const id = "support";
-                                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                document
+                                    .getElementById(id)
+                                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
                                 history.replaceState(null, "", `#${id}`);
-                                window.dispatchEvent(new CustomEvent("gk:flash-support", { detail: { id } }));
+                                window.dispatchEvent(
+                                    new CustomEvent("gk:flash-support", { detail: { id } })
+                                );
                             }}
                             className="text-amber-300/80 hover:text-amber-200 transition"
                         >
                             • Destek ol
                         </a>
-
                     </div>
+
+                    {/* ✅ FOTO ALBÜM (manifest tabanlı) */}
+                    <IssueAlbum
+                        issueLabel="01"
+                        title="İlk Gece"
+                        subtitle="Sınırın içinde, sessiz bir başlangıç."
+                    />
 
                     <h3 className="mt-14 text-2xl md:text-3xl text-amber-300">
                         Bu sayıya ait yazılar
@@ -122,9 +139,7 @@ export default function Issue01({ articles = [] }: Props) {
                 </motion.div>
 
                 {list.length === 0 ? (
-                    <p className="mt-10 text-white/60">
-                        Bu sayıya ait yazı bulunamadı.
-                    </p>
+                    <p className="mt-10 text-white/60">Bu sayıya ait yazı bulunamadı.</p>
                 ) : (
                     <div className="mt-10 space-y-8">
                         {list.map((a, i) => {
@@ -143,14 +158,10 @@ export default function Issue01({ articles = [] }: Props) {
                                         href={`/articles/${a.slug}`}
                                         className="block rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition px-6 py-5"
                                     >
-                                        <div className="text-2xl text-amber-300">
-                                            {a.title}
-                                        </div>
+                                        <div className="text-2xl text-amber-300">{a.title}</div>
 
                                         {a.excerpt && (
-                                            <p className="text-white/70 mt-1">
-                                                {a.excerpt}
-                                            </p>
+                                            <p className="text-white/70 mt-1">{a.excerpt}</p>
                                         )}
 
                                         <div className="mt-2 flex items-center gap-2 text-sm text-white/60">

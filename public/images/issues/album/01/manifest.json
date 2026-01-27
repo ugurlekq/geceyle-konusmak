@@ -1,0 +1,44 @@
+﻿{
+  "images": [
+    {
+      "file": "ilkgece-ucurum.png",
+      "caption": "Sınır, bitiş değil; algının başladığı yerdir."
+    },
+    {
+      "file": "ilkgece-mum.png",
+      "caption": "Sessizlik bazen ateşin en sakin biçimidir."
+    },
+    {
+      "file": "ilkgece-album.png",
+      "caption": "Hatıra, geri dönüş değil; yer değiştiren bir duygudur."
+    },
+    {
+      "file": "ilkgece-bosoda.png",
+      "caption": "Boşluk yokluk değildir; anlamın yeniden doğduğu alandır."
+    },
+    {
+      "file": "ilkgece-zihin.png",
+      "caption": "Hapishane sandığımız yer, çoğu zaman anahtarı da içinde tutar."
+    },
+    {
+      "file": "ilkgece-bosbank.png",
+      "caption": "Kimse oturmasa da bir yer, yine de dinlenmeyi bilir."
+    },
+    {
+      "file": "ilkgece-balkon.png",
+      "caption": "Islanmayı seçmek, duyguyu kontrol etmeyi bırakmaktır."
+    },
+    {
+      "file": "ilkgece-eskiz.png",
+      "caption": "Melankoli gölge değil; gölgenin çizgisidir."
+    },
+    {
+      "file": "ilkgece-gunbatimi.png",
+      "caption": "Bazı yolculuklar ses çıkarmadan başlar."
+    },
+    {
+      "file": "ilkgece-kirikgitar.png",
+      "caption": "Bütünlük, kusursuzluk değildir."
+    }
+  ]
+}

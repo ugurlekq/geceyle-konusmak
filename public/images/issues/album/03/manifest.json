@@ -1,0 +1,14 @@
+﻿{
+  "images": [
+    { "file": "iyilesmek-masa.png", "caption": "Bilgi duruyor; ama artık taşımak zorunda değilsin." },
+    { "file": "iyilesmek-sisliyol.png", "caption": "Görmemek bazen kaybolmak değil; korunmaktır." },
+    { "file": "iyilesmek-vadiinsan.png", "caption": "İyileşmek, ilerlemekten önce durup bakabilmektir." },
+    { "file": "iyilesmek-selale.png", "caption": "Küçük akışlar, içindeki havuzu yavaşça doldurur." },
+    { "file": "iyilesmek-kartal.png", "caption": "Yorgunluk güçsüzlük değil; deneyimin sessiz kanadıdır." },
+    { "file": "iyilesmek-maratoncu.png", "caption": "İyileşmek kazanmak değil; tamamlayıp nefes almaktır." },
+    { "file": "iyilesmek-orman.png", "caption": "Bazen yol, açıklığa varınca susar." },
+    { "file": "iyilesmek-tas.png", "caption": "Zaman aşındırır; ama özü yok etmez." },
+    { "file": "iyilesmek-canta.png", "caption": "Yük yere konduğunda beden yeniden kendine döner." },
+    { "file": "iyilesmek-koy.png", "caption": "Huzur, hayatın yavaşça tütmesidir." }
+  ]
+}

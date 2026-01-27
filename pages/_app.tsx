@@ -1,10 +1,14 @@
-import { SessionProvider } from "next-auth/react";
 import type { AppProps } from "next/app";
+
+import "yet-another-react-lightbox/styles.css";
 import "../styles/globals.css";
-import VisualOverlay from "../components/VisualOverlay";
-import ThemeToggle from "../components/ThemeToggle";
+
+import { SessionProvider } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Analytics } from "@vercel/analytics/react";
+
+import VisualOverlay from "../components/VisualOverlay";
+import ThemeToggle from "../components/ThemeToggle";
 
 export default function App({ Component, pageProps, router }: AppProps) {
     return (

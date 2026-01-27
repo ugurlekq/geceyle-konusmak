@@ -3,7 +3,7 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-
+import IssueAlbum from "@/components/IssueAlbum";
 import Header from "@/components/Header";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
@@ -209,6 +209,13 @@ export default function IssuePage({
                         </a>
                     </div>
                 </motion.header>
+
+                <IssueAlbum
+                    issueLabel={label}
+                    title={displayIssueName}
+                    subtitle="Performans çağında, iç ritmi geri alma."
+                />
+
 
                 {list.length === 0 ? (
                     <p className="mt-10 text-white/60">Bu sayıya ait yazı yok.</p>
