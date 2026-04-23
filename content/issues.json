@@ -23,8 +23,15 @@
   {
     "number": 5,
     "title": "Algının Dünyası",
-    "date": "2026-01-13",
+    "date": null,
     "description": "Algı, çoğu zaman düşünceden önce çalışır. Ne gördüğümüzü değil, neyi görmeye değer bulduğumuzu seçer. Bu sayıda metinler, algının nasıl kurulduğunu ve hangi anlarda düşüncenin yerini aldığını takip eder.",
+    "cover_url": ""
+  },
+  {
+    "number": 6,
+    "title": "Yol Ayrımı ",
+    "date": "2026-03-07",
+    "description": "“İnsan kendini tanımaya başladığında, artık yalnızca ne hissettiğini değil, nereye gideceğini de seçmek zorunda kalır. Bu sayı, farkındalığın bir son değil; yön talep eden bir eşik olduğunu hatırlatır. Çünkü kendini görmek yetmez, insan bazen gördüğü şeyle ne yapacağına da karar vermek zorundadır.”",
     "cover_url": ""
   }
 ]

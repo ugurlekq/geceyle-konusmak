@@ -9,6 +9,7 @@ import { marked } from "marked";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ArticleLayout from "@/components/ArticleLayout";
+import ArticleShare from "../../components/ArticleShare";
 import BackLink from "@/components/BackLink";
 import { authors } from "@/data/authors";
 
@@ -465,7 +466,12 @@ export default function ArticlePage({
                                     <div className="text-white/40 text-xs">senkron…</div>
                                 )}
                             </div>
-
+                            <ArticleShare
+                                title={finalTitle}
+                                summary=""
+                                url={pageSlug ? `https://geceylekonusmak.art/${pageSlug}` : ""}
+                                className="mt-6"
+                            />
                             <div className="mt-8">
                                 <div className="text-white/80 font-semibold mb-3">Yorumlar</div>
 
