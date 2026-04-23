@@ -469,7 +469,7 @@ export default function ArticlePage({
                             <ArticleShare
                                 title={finalTitle}
                                 summary=""
-                                url={pageSlug ? `https://geceylekonusmak.art/${pageSlug}` : ""}
+                                url={pageSlug ? `https://geceylekonusmak.art/articles/${pageSlug}` : ""}
                                 className="mt-6"
                             />
                             <div className="mt-8">
